@@ -1,0 +1,59 @@
+{
+  "generated_at": "2025-08-17T21:46:23.269Z",
+  "rules": {
+    "province_map": [
+      [
+        "qc",
+        "QC"
+      ],
+      [
+        "quebec",
+        "QC"
+      ],
+      [
+        "québec",
+        "QC"
+      ],
+      [
+        "nb",
+        "NB"
+      ],
+      [
+        "new brunswick",
+        "NB"
+      ],
+      [
+        "ns",
+        "NS"
+      ],
+      [
+        "nova scotia",
+        "NS"
+      ],
+      [
+        "nl",
+        "NL"
+      ],
+      [
+        "newfoundland and labrador",
+        "NL"
+      ],
+      [
+        "newfoundland",
+        "NL"
+      ],
+      [
+        "me",
+        "ME"
+      ],
+      [
+        "maine",
+        "ME"
+      ]
+    ],
+    "slugify": "lowercase, diacritics stripped, non-alnum -> '-'",
+    "bbox": "must be [minLon,minLat,maxLon,maxLat] with min<max",
+    "bilingual": "never drop name_fr/name_en; prefer master if conflict"
+  },
+  "actions": []
+}

@@ -1,0 +1,67 @@
+{
+  "common": {
+    "tagline": "Atlantic Salmon Rivers",
+    "nav": {
+      "map": "Map",
+      "rivers": "Rivers",
+      "offline": "Offline",
+      "admin": "Admin"
+    },
+    "paywall": {
+      "title": "Premium Content",
+      "description": "Access detailed maps and offline packs",
+      "upgrade": "Upgrade"
+    },
+    "offline": {
+      "message": "You are offline. Some features may be limited."
+    }
+  },
+  "map": {
+    "layers": {
+      "rivers": "Rivers",
+      "pools": "Pools",
+      "premium": "Premium"
+    },
+    "pools": "Pools",
+    "status": "Status",
+    "premium": {
+      "title": "Premium Maps",
+      "description": "Access detailed maps with numbered pools"
+    },
+    "error": {
+      "title": "Error",
+      "loading": "Error loading data"
+    }
+  },
+  "offline": {
+    "installed": "Installed",
+    "download": "Download",
+    "downloading": "Downloading...",
+    "uninstall": "Uninstall",
+    "pools": "Pools",
+    "download": {
+      "success": "Download successful",
+      "description": "Offline pack for {river} downloaded successfully",
+      "error": "Download error",
+      "errorDescription": "Unable to download offline pack"
+    },
+    "uninstall": {
+      "success": "Uninstall successful",
+      "description": "Offline pack for {river} uninstalled",
+      "error": "Uninstall error",
+      "errorDescription": "Unable to uninstall offline pack"
+    }
+  },
+  "community": {
+    "title": "Courant+ Community",
+    "newPost": "New post",
+    "comment": "Comment",
+    "like": "Like",
+    "helpful": "Helpful",
+    "insightful": "Insightful",
+    "leaderboard": "Leaderboard",
+    "courses": "Courses",
+    "events": "Events",
+    "rsvp": "RSVP"
+  }
+}

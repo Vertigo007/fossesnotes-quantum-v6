@@ -1,0 +1,625 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2024-01-15",
+    "description": "Master list of Atlantic Salmon rivers in North America",
+    "total_rivers": 30,
+    "countries": [
+      "CA",
+      "US"
+    ],
+    "provinces_states": [
+      "QC",
+      "NB",
+      "NS",
+      "NL",
+      "ME"
+    ],
+    "last_updated": "2025-08-17T21:47:34.883Z",
+    "patch_applied": "2025-08-17T21:46:23.275Z"
+  },
+  "rivers": [
+    {
+      "id": 1,
+      "name_fr": "Rivière Matapédia",
+      "name_en": "Matapedia River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "matapedia-river",
+      "bbox": [
+        -67.2,
+        48,
+        -66.8,
+        48.4
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 2,
+      "name_fr": "Rivière Restigouche",
+      "name_en": "Restigouche River",
+      "province_state": "NB",
+      "country": "CA",
+      "slug": "restigouche-river",
+      "bbox": [
+        -67.5,
+        47.8,
+        -66.9,
+        48.2
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 3,
+      "name_fr": "Rivière Cascapédia",
+      "name_en": "Cascapedia River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "cascapedia-river",
+      "bbox": [
+        -65.8,
+        48.2,
+        -65.4,
+        48.6
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 4,
+      "name_fr": "Rivière Bonaventure",
+      "name_en": "Bonaventure River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "bonaventure-river",
+      "bbox": [
+        -65.4,
+        48,
+        -65,
+        48.4
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 5,
+      "name_fr": "Rivière Sainte-Marguerite",
+      "name_en": "Sainte-Marguerite River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "sainte-marguerite-river",
+      "bbox": [
+        -70.2,
+        48.4,
+        -69.8,
+        48.8
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 6,
+      "name_fr": "Rivière Moisie",
+      "name_en": "Moisie River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "moisie-river",
+      "bbox": [
+        -66.2,
+        50.2,
+        -65.8,
+        50.6
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 7,
+      "name_fr": "Rivière Natashquan",
+      "name_en": "Natashquan River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "natashquan-river",
+      "bbox": [
+        -61.8,
+        50.2,
+        -61.4,
+        50.6
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 8,
+      "name_fr": "Rivière Romaine",
+      "name_en": "Romaine River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "romaine-river",
+      "bbox": [
+        -63.2,
+        50.6,
+        -62.8,
+        51
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 9,
+      "name_fr": "Rivière Petit Mécatina",
+      "name_en": "Petit Mecatina River",
+      "province_state": "QC",
+      "country": "CA",
+      "slug": "petit-mecatina-river",
+      "bbox": [
+        -59.8,
+        50.8,
+        -59.4,
+        51.2
+      ],
+      "status": "active",
+      "sources": [
+        "saq_pdf_2024",
+        "dfo_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 10,
+      "name_fr": "Rivière Saint-Jean",
+      "name_en": "Saint John River",
+      "province_state": "NB",
+      "country": "CA",
+      "slug": "saint-john-river-nb",
+      "bbox": [
+        -67.8,
+        45.2,
+        -67.4,
+        45.6
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nb_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 11,
+      "name_fr": "Rivière Miramichi",
+      "name_en": "Miramichi River",
+      "province_state": "NB",
+      "country": "CA",
+      "slug": "miramichi-river",
+      "bbox": [
+        -66.2,
+        46.8,
+        -65.8,
+        47.2
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nb_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 12,
+      "name_fr": "Rivière Nashwaak",
+      "name_en": "Nashwaak River",
+      "province_state": "NB",
+      "country": "CA",
+      "slug": "nashwaak-river",
+      "bbox": [
+        -66.6,
+        46.2,
+        -66.2,
+        46.6
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nb_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 13,
+      "name_fr": "Rivière Tobique",
+      "name_en": "Tobique River",
+      "province_state": "NB",
+      "country": "CA",
+      "slug": "tobique-river",
+      "bbox": [
+        -67.2,
+        46.8,
+        -66.8,
+        47.2
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nb_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 14,
+      "name_fr": "Rivière Southwest Miramichi",
+      "name_en": "Southwest Miramichi River",
+      "province_state": "NB",
+      "country": "CA",
+      "slug": "southwest-miramichi-river",
+      "bbox": [
+        -66.6,
+        46.4,
+        -66.2,
+        46.8
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nb_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 15,
+      "name_fr": "Rivière Northwest Miramichi",
+      "name_en": "Northwest Miramichi River",
+      "province_state": "NB",
+      "country": "CA",
+      "slug": "northwest-miramichi-river",
+      "bbox": [
+        -66.8,
+        46.6,
+        -66.4,
+        47
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nb_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 16,
+      "name_fr": "Rivière Margaree",
+      "name_en": "Margaree River",
+      "province_state": "NS",
+      "country": "CA",
+      "slug": "margaree-river",
+      "bbox": [
+        -61.2,
+        46.4,
+        -60.8,
+        46.8
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "ns_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 17,
+      "name_fr": "Rivière LaHave",
+      "name_en": "LaHave River",
+      "province_state": "NS",
+      "country": "CA",
+      "slug": "lahave-river",
+      "bbox": [
+        -64.4,
+        44.2,
+        -64,
+        44.6
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "ns_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 18,
+      "name_fr": "Rivière Medway",
+      "name_en": "Medway River",
+      "province_state": "NS",
+      "country": "CA",
+      "slug": "medway-river",
+      "bbox": [
+        -64.8,
+        44,
+        -64.4,
+        44.4
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "ns_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 19,
+      "name_fr": "Rivière St. Mary's",
+      "name_en": "St. Mary's River",
+      "province_state": "NS",
+      "country": "CA",
+      "slug": "st-marys-river-ns",
+      "bbox": [
+        -61.8,
+        45.2,
+        -61.4,
+        45.6
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "ns_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 20,
+      "name_fr": "Rivière Musquodoboit",
+      "name_en": "Musquodoboit River",
+      "province_state": "NS",
+      "country": "CA",
+      "slug": "musquodoboit-river",
+      "bbox": [
+        -63.2,
+        44.8,
+        -62.8,
+        45.2
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "ns_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 21,
+      "name_fr": "Rivière Humber",
+      "name_en": "Humber River",
+      "province_state": "NL",
+      "country": "CA",
+      "slug": "humber-river-nl",
+      "bbox": [
+        -57.8,
+        49,
+        -57.4,
+        49.4
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nl_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 22,
+      "name_fr": "Rivière Exploits",
+      "name_en": "Exploits River",
+      "province_state": "NL",
+      "country": "CA",
+      "slug": "exploits-river",
+      "bbox": [
+        -55.2,
+        48.8,
+        -54.8,
+        49.2
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nl_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 23,
+      "name_fr": "Rivière Gander",
+      "name_en": "Gander River",
+      "province_state": "NL",
+      "country": "CA",
+      "slug": "gander-river",
+      "bbox": [
+        -54.8,
+        48.6,
+        -54.4,
+        49
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nl_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 24,
+      "name_fr": "Rivière Terra Nova",
+      "name_en": "Terra Nova River",
+      "province_state": "NL",
+      "country": "CA",
+      "slug": "terra-nova-river",
+      "bbox": [
+        -54.2,
+        48.4,
+        -53.8,
+        48.8
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nl_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 25,
+      "name_fr": "Rivière Conne",
+      "name_en": "Conne River",
+      "province_state": "NL",
+      "country": "CA",
+      "slug": "conne-river",
+      "bbox": [
+        -55.8,
+        47.8,
+        -55.4,
+        48.2
+      ],
+      "status": "active",
+      "sources": [
+        "dfo_2023",
+        "nl_dnr_2024"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 26,
+      "name_fr": "Rivière Penobscot",
+      "name_en": "Penobscot River",
+      "province_state": "ME",
+      "country": "US",
+      "slug": "penobscot-river",
+      "bbox": [
+        -69.2,
+        44.8,
+        -68.8,
+        45.2
+      ],
+      "status": "active",
+      "sources": [
+        "maine_dnr_2024",
+        "usfws_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 27,
+      "name_fr": "Rivière Kennebec",
+      "name_en": "Kennebec River",
+      "province_state": "ME",
+      "country": "US",
+      "slug": "kennebec-river",
+      "bbox": [
+        -69.8,
+        44.2,
+        -69.4,
+        44.6
+      ],
+      "status": "active",
+      "sources": [
+        "maine_dnr_2024",
+        "usfws_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 28,
+      "name_fr": "Rivière Androscoggin",
+      "name_en": "Androscoggin River",
+      "province_state": "ME",
+      "country": "US",
+      "slug": "androscoggin-river",
+      "bbox": [
+        -70.4,
+        44,
+        -70,
+        44.4
+      ],
+      "status": "active",
+      "sources": [
+        "maine_dnr_2024",
+        "usfws_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 29,
+      "name_fr": "Rivière Saco",
+      "name_en": "Saco River",
+      "province_state": "ME",
+      "country": "US",
+      "slug": "saco-river",
+      "bbox": [
+        -70.8,
+        43.6,
+        -70.4,
+        44
+      ],
+      "status": "active",
+      "sources": [
+        "maine_dnr_2024",
+        "usfws_2023"
+      ],
+      "last_checked": "2024-01-15"
+    },
+    {
+      "id": 30,
+      "name_fr": "Rivière Presumpscot",
+      "name_en": "Presumpscot River",
+      "province_state": "ME",
+      "country": "US",
+      "slug": "presumpscot-river",
+      "bbox": [
+        -70.6,
+        43.8,
+        -70.2,
+        44.2
+      ],
+      "status": "active",
+      "sources": [
+        "maine_dnr_2024",
+        "usfws_2023"
+      ],
+      "last_checked": "2024-01-15"
+    }
+  ]
+}
+
+

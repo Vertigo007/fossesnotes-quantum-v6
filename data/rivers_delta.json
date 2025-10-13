@@ -1,0 +1,70 @@
+{
+  "generated_at": "2025-08-17T21:37:40.238Z",
+  "summary": {
+    "total_processed": 30,
+    "total_added": 0,
+    "total_updated": 26,
+    "total_errors": 4,
+    "missing_in_master": 2,
+    "mismatched": 4
+  },
+  "added": [],
+  "missing_in_master": [
+    {
+      "id": 8,
+      "nom": "Rivière Sainte-Anne",
+      "nom_anglais": "Sainte-Anne River",
+      "province_etat": "Québec",
+      "pays": "Canada"
+    },
+    {
+      "id": 9,
+      "nom": "Rivière du Petit Saguenay",
+      "nom_anglais": "Petit Saguenay River",
+      "province_etat": "Québec",
+      "pays": "Canada"
+    }
+  ],
+  "mismatched": [
+    {
+      "id": 11,
+      "slug": "miramichi-river",
+      "name_fr": "Rivière Miramichi",
+      "name_en": "Miramichi River",
+      "mismatches": [
+        "name_fr: \"Miramichi River\" vs \"Rivière Miramichi\"",
+        "province: \"Nouveau-Brunswick\" vs \"NB\""
+      ]
+    },
+    {
+      "id": 16,
+      "slug": "margaree-river",
+      "name_fr": "Rivière Margaree",
+      "name_en": "Margaree River",
+      "mismatches": [
+        "name_fr: \"Margaree River\" vs \"Rivière Margaree\"",
+        "province: \"Nouvelle-Écosse\" vs \"NS\""
+      ]
+    },
+    {
+      "id": 21,
+      "slug": "humber-river-nl",
+      "name_fr": "Rivière Humber",
+      "name_en": "Humber River",
+      "mismatches": [
+        "name_fr: \"Humber River\" vs \"Rivière Humber\"",
+        "province: \"Terre-Neuve-et-Labrador\" vs \"NL\""
+      ]
+    },
+    {
+      "id": 26,
+      "slug": "penobscot-river",
+      "name_fr": "Rivière Penobscot",
+      "name_en": "Penobscot River",
+      "mismatches": [
+        "name_fr: \"Penobscot River\" vs \"Rivière Penobscot\"",
+        "province: \"Maine\" vs \"ME\""
+      ]
+    }
+  ]
+}

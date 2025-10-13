@@ -1,0 +1,67 @@
+{
+  "common": {
+    "tagline": "Rivières à Saumon Atlantique",
+    "nav": {
+      "map": "Carte",
+      "rivers": "Rivières",
+      "offline": "Hors ligne",
+      "admin": "Admin"
+    },
+    "paywall": {
+      "title": "Contenu Premium",
+      "description": "Accédez aux cartes détaillées et aux packs hors ligne",
+      "upgrade": "Mettre à niveau"
+    },
+    "offline": {
+      "message": "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées."
+    }
+  },
+  "map": {
+    "layers": {
+      "rivers": "Rivières",
+      "pools": "Fosses",
+      "premium": "Premium"
+    },
+    "pools": "Fosses",
+    "status": "Statut",
+    "premium": {
+      "title": "Cartes Premium",
+      "description": "Accédez aux cartes détaillées avec fosses numérotées"
+    },
+    "error": {
+      "title": "Erreur",
+      "loading": "Erreur lors du chargement des données"
+    }
+  },
+  "offline": {
+    "installed": "Installé",
+    "download": "Télécharger",
+    "downloading": "Téléchargement...",
+    "uninstall": "Désinstaller",
+    "pools": "Fosses",
+    "download": {
+      "success": "Téléchargement réussi",
+      "description": "Pack hors ligne pour {river} téléchargé avec succès",
+      "error": "Erreur de téléchargement",
+      "errorDescription": "Impossible de télécharger le pack hors ligne"
+    },
+    "uninstall": {
+      "success": "Désinstallation réussie",
+      "description": "Pack hors ligne pour {river} désinstallé",
+      "error": "Erreur de désinstallation",
+      "errorDescription": "Impossible de désinstaller le pack hors ligne"
+    }
+  },
+  "community": {
+    "title": "Communauté Courant+",
+    "newPost": "Nouveau post",
+    "comment": "Commenter",
+    "like": "J'aime",
+    "helpful": "Utile",
+    "insightful": "Pertinent",
+    "leaderboard": "Classement",
+    "courses": "Formations",
+    "events": "Événements",
+    "rsvp": "Je participe"
+  }
+}
