@@ -81,8 +81,21 @@
     "truite",
     "gps",
     "carte",
-    "communauté"
+    "communauté",
+    "fishing",
+    "fly-fishing",
+    "react",
+    "nodejs",
+    "saas"
   ],
   "author": "FossesNotes Team",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/fossesnotes-quantum.git"
+  },
+  "homepage": "https://github.com/username/fossesnotes-quantum#readme",
+  "bugs": {
+    "url": "https://github.com/username/fossesnotes-quantum/issues"
+  }
 }
