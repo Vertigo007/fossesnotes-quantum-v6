@@ -108,3 +108,6 @@ playwright/.cache/
 
 # Jest coverage
 coverage/
+
+# MarketPilot distributable builds
+marketpilot-*.zip
