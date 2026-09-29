@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MarketPilot</title>
+<link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="create" aria-selected="true">Créer</button>
+  <button role="tab" data-tab="listings">Annonces</button>
+  <button role="tab" data-tab="decisions">Décisions <span id="decision-count" class="count" hidden></span></button>
+  <button role="tab" data-tab="settings" aria-label="Réglages">⚙︎</button>
+</nav>
+
+<div id="flash" class="flash" role="status" hidden></div>
+
+<!-- ============================================================ CREATE -->
+<section id="tab-create" class="tab">
+  <div class="step" id="step-photos">
+    <h2><span class="n">1</span> Photos</h2>
+    <button id="new-session">Nouvelle annonce</button>
+    <div id="session" hidden>
+      <div class="qr-wrap">
+        <div id="qr" class="qr" aria-label="Code QR pour téléverser depuis ton cellulaire"></div>
+        <p class="muted small">Scanne avec ton cellulaire pour prendre les photos. Elles arrivent ici en direct.<br>
+          <a id="mobile-link" target="_blank" rel="noopener">Ouvrir le lien</a> · <label class="link">ou choisis des fichiers<input id="local-files" type="file" accept="image/*" multiple hidden></label></p>
+      </div>
+      <ol id="photos" class="photos"></ol>
+      <p class="muted small">Glisse les photos pour changer l’ordre — la 1<sup>re</sup> est la couverture.</p>
+    </div>
+  </div>
+
+  <div class="step" id="step-analyze" hidden>
+    <h2><span class="n">2</span> Identification IA</h2>
+    <label>Notes (optionnel)<textarea id="notes" rows="2" placeholder="Ex. acheté en 2023, batterie neuve, petite égratignure sur le côté"></textarea></label>
+    <button id="analyze">Analyser les photos</button>
+    <div id="item" hidden>
+      <label>Article<input id="item-name"></label>
+      <div class="grid2">
+        <label>Catégorie<select id="category"></select></label>
+        <label>État<select id="condition"></select></label>
+      </div>
+      <div id="item-extra" class="small"></div>
+    </div>
+  </div>
+
+  <div class="step" id="step-market" hidden>
+    <h2><span class="n">3</span> Prix du marché</h2>
+    <label>Recherches Marketplace<input id="queries" placeholder="séparées par ; "></label>
+    <button id="scan">Analyser le marché</button>
+    <div id="market" hidden>
+      <div id="market-stats" class="stats"></div>
+      <div id="strategies" class="strategies"></div>
+      <details><summary>Annonces comparables</summary><ul id="comparables" class="comparables"></ul></details>
+    </div>
+    <div class="grid2">
+      <label>Prix affiché ($)<input id="price" type="number" min="0" step="1"></label>
+      <label>Prix plancher ($) <span class="hint" title="Le système ne baissera jamais sous ce prix, et seulement avec ton accord.">?</span><input id="floor" type="number" min="0" step="1"></label>
+    </div>
+    <div id="desired" class="small"></div>
+  </div>
+
+  <div class="step" id="step-copy" hidden>
+    <h2><span class="n">4</span> Rédaction</h2>
+    <div class="grid2">
+      <label>Ton<select id="tone"><option value="friendly">Amical</option><option value="short">Court</option><option value="firm">Ferme</option></select></label>
+      <label>Langue<select id="lang"><option value="fr">Français</option><option value="en">English</option></select></label>
+    </div>
+    <label>Secteur de ramassage<input id="pickup" placeholder="Ex. Laval (Sainte-Rose)"></label>
+    <div class="checks">
+      <label><input id="negotiable" type="checkbox" checked> Prix discutable</label>
+      <label><input id="delivery" type="checkbox"> Livraison possible</label>
+    </div>
+    <button id="write">Rédiger l’annonce</button>
+    <label>Titre <span id="title-count" class="muted small"></span><input id="title" maxlength="100"></label>
+    <label>Description<textarea id="description" rows="9"></textarea></label>
+  </div>
+
+  <div class="step" id="step-plan" hidden>
+    <h2><span class="n">5</span> Stratégie de vente</h2>
+    <div class="modes" role="radiogroup">
+      <label><input type="radio" name="mode" value="fast"> <b>Vendre vite</b><span>−10 % aux 3 jours</span></label>
+      <label><input type="radio" name="mode" value="balanced" checked> <b>Équilibré</b><span>−7 % aux 5 jours</span></label>
+      <label><input type="radio" name="mode" value="max"> <b>Maximiser</b><span>−5 % aux 7 jours</span></label>
+    </div>
+    <div class="checks">
+      <label><input id="auto-renew" type="checkbox" checked> Relancer automatiquement (gratuit)</label>
+      <label><input id="auto-drop" type="checkbox"> Baisser sans me demander</label>
+      <label><input id="boost" type="checkbox"> Proposer un boost payant si peu de vues</label>
+    </div>
+    <div id="boost-opts" class="grid2" hidden>
+      <label>Budget $/jour<input id="boost-budget" type="number" min="1" value="3"></label>
+      <label>Jours<input id="boost-days" type="number" min="1" max="14" value="3"></label>
+    </div>
+    <div id="ladder" class="ladder"></div>
+    <button id="save-fill" class="primary">Enregistrer et remplir Marketplace</button>
+    <p class="muted small">L’onglet Facebook s’ouvre avec tout rempli. Tu vérifies et tu cliques « Publier ».</p>
+  </div>
+</section>
+
+<!-- ============================================================ LISTINGS -->
+<section id="tab-listings" class="tab" hidden>
+  <div class="row">
+    <button id="sync" class="secondary">Synchroniser avec Facebook</button>
+  </div>
+  <div id="listings"></div>
+</section>
+
+<!-- ============================================================ DECISIONS -->
+<section id="tab-decisions" class="tab" hidden>
+  <div class="row">
+    <button id="run-strategy" class="secondary">Analyser maintenant</button>
+    <button id="run-actions" class="secondary">Exécuter la file</button>
+  </div>
+  <h3>À approuver</h3>
+  <div id="pending"></div>
+  <h3>Approuvées (en file)</h3>
+  <div id="approved"></div>
+</section>
+
+<!-- ============================================================ SETTINGS -->
+<section id="tab-settings" class="tab" hidden>
+  <label>Adresse du serveur<input id="s-server" placeholder="http://192.168.1.20:8787"></label>
+  <label>Jeton (MARKETPILOT_TOKEN)<input id="s-token" type="password" autocomplete="off"></label>
+  <label>Ville Marketplace (optionnel)<input id="s-city" placeholder="montreal, quebec, laval…"></label>
+  <label>Secteur de ramassage par défaut<input id="s-pickup"></label>
+  <div class="checks">
+    <label><input id="s-auto-exec" type="checkbox"> Exécuter les actions approuvées automatiquement</label>
+    <label><input id="s-auto-submit" type="checkbox"> Cliquer « Publier / Mettre à jour » à ma place</label>
+  </div>
+  <p class="muted small warn">Automatiser les clics sur Facebook peut contrevenir à ses conditions d’utilisation. Garde un rythme humain.</p>
+  <button id="s-save">Enregistrer</button>
+  <div id="s-status" class="small"></div>
+  <div id="phone-link" hidden>
+    <h3>Approuver depuis ton cellulaire</h3>
+    <div id="approvals-qr" class="qr"></div>
+    <p class="muted small">Scanne une fois : la page des décisions reste enregistrée sur ton téléphone.</p>
+  </div>
+</section>
+
+<script type="module" src="sidepanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b74e4">
+<title>MarketPilot · Décisions</title>
+<link rel="stylesheet" href="/m/assets/mobile.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>💰 Décisions de vente</h1>
+    <p class="muted">Rien ne change sur tes annonces sans ton accord. Les actions approuvées s’exécutent à la prochaine ouverture de Chrome.</p>
+  </header>
+
+  <section id="login" hidden>
+    <p>Colle le jeton MarketPilot (affiché dans les réglages de l’extension) :</p>
+    <input id="token" type="password" autocomplete="off" placeholder="Jeton">
+    <button id="save-token">Enregistrer sur ce téléphone</button>
+  </section>
+
+  <section id="app" hidden>
+    <p id="status" class="status" role="status"></p>
+    <div id="pending"></div>
+    <h2>En attente d’exécution</h2>
+    <div id="approved"></div>
+    <button id="refresh" class="secondary">Actualiser</button>
+  </section>
+</main>
+<script>
+(() => {
+  const KEY = 'marketpilot.token';
+  const fromHash = new URLSearchParams(location.hash.slice(1)).get('k');
+  if (fromHash) {
+    try { localStorage.setItem(KEY, fromHash); } catch {}
+    history.replaceState(null, '', location.pathname);
+  }
+  let token = fromHash;
+  try { token = token || localStorage.getItem(KEY); } catch {}
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const LABELS = { renew: 'Relancer', price_drop: 'Baisse de prix', relist: 'Republier', boost: 'Booster (payant)', advice: 'Conseil' };
+
+  async function api(path, opts = {}) {
+    const res = await fetch(`/api${path}`, {
+      ...opts,
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 401) { showLogin(); throw new Error('Jeton invalide'); }
+    if (!res.ok) throw new Error(body.error || res.statusText);
+    return body;
+  }
+
+  function showLogin() { $('login').hidden = false; $('app').hidden = true; }
+
+  function card(a, withButtons) {
+    const l = a.listing || {};
+    const priceInput = a.type === 'price_drop' && withButtons
+      ? `<label>Nouveau prix (plancher ${esc(l.floorPrice)} $)<input type="number" inputmode="decimal" min="${esc(l.floorPrice)}" value="${esc(a.payload.to)}" data-price="${esc(a.id)}"></label>`
+      : '';
+    const buttons = withButtons
+      ? `<div class="row">
+           <button data-approve="${esc(a.id)}">${a.type === 'advice' ? 'Compris' : 'Approuver'}</button>
+           ${a.type === 'advice' ? '' : `<button class="danger" data-reject="${esc(a.id)}">Refuser</button>`}
+         </div>`
+      : `<button class="secondary" data-reject="${esc(a.id)}">Annuler</button>`;
+    return `<article class="card">
+      <span class="pill ${esc(a.type)}">${esc(LABELS[a.type] || a.type)}</span>
+      <h3>${esc(l.title || 'Annonce supprimée')}</h3>
+      <p class="muted">${esc(a.reason)}</p>
+      ${priceInput}
+      ${buttons}
+    </article>`;
+  }
+
+  async function load() {
+    $('login').hidden = true; $('app').hidden = false;
+    $('status').textContent = 'Chargement…';
+    try {
+      const actions = await api('/actions?status=pending,approved');
+      const pending = actions.filter((a) => a.status === 'pending');
+      const approved = actions.filter((a) => a.status === 'approved');
+      $('pending').innerHTML = pending.length ? pending.map((a) => card(a, true)).join('') : '<p class="empty">Aucune décision à prendre 👌</p>';
+      $('approved').innerHTML = approved.length ? approved.map((a) => card(a, false)).join('') : '<p class="empty">Rien en file.</p>';
+      $('status').textContent = '';
+    } catch (err) {
+      $('status').textContent = err.message;
+      $('status').className = 'status error';
+    }
+  }
+
+  document.addEventListener('click', async (e) => {
+    const approve = e.target.closest('[data-approve]');
+    const reject = e.target.closest('[data-reject]');
+    if (!approve && !reject) return;
+    const id = (approve || reject).dataset.approve || (approve || reject).dataset.reject;
+    (approve || reject).disabled = true;
+    try {
+      if (approve) {
+        const input = document.querySelector(`[data-price="${CSS.escape(id)}"]`);
+        const body = input ? { price: Number(input.value) } : {};
+        await api(`/actions/${id}/approve`, { method: 'POST', body: JSON.stringify(body) });
+      } else {
+        await api(`/actions/${id}/reject`, { method: 'POST', body: '{}' });
+      }
+      navigator.vibrate?.(30);
+      await load();
+    } catch (err) {
+      (approve || reject).disabled = false;
+      alert(err.message);
+    }
+  });
+
+  $('save-token').addEventListener('click', () => {
+    token = $('token').value.trim();
+    try { localStorage.setItem(KEY, token); } catch {}
+    load();
+  });
+  $('refresh').addEventListener('click', load);
+
+  token ? load() : showLogin();
+})();
+</script>
+</body>
+</html>

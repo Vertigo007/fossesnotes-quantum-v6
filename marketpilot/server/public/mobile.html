@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b74e4">
+<title>MarketPilot · Photos</title>
+<link rel="stylesheet" href="/m/assets/mobile.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>📸 Photos de l'annonce</h1>
+    <p class="muted">Prends l'article sous plusieurs angles, en lumière naturelle. La 1<sup>re</sup> photo sera la couverture.</p>
+  </header>
+
+  <label class="big-button" for="camera">Prendre une photo</label>
+  <input id="camera" type="file" accept="image/*" capture="environment" hidden>
+  <label class="big-button secondary" for="gallery">Choisir dans la galerie</label>
+  <input id="gallery" type="file" accept="image/*" multiple hidden>
+
+  <p id="status" class="status" role="status"></p>
+  <ul id="thumbs" class="thumbs"></ul>
+
+  <details class="tips">
+    <summary>Conseils pour des photos qui vendent</summary>
+    <ul>
+      <li>Fond neutre et dégagé, article centré.</li>
+      <li>Une photo de l'étiquette / numéro de modèle.</li>
+      <li>Montre honnêtement les défauts : moins de questions, moins d'annulations.</li>
+      <li>Format vertical ou carré, pas de filtre.</li>
+    </ul>
+  </details>
+</main>
+<script>
+(() => {
+  const sessionId = location.pathname.split('/').pop();
+  const token = new URLSearchParams(location.hash.slice(1)).get('t');
+  const statusEl = document.getElementById('status');
+  const thumbs = document.getElementById('thumbs');
+  let uploaded = 0;
+  const setStatus = (text, kind = '') => { statusEl.textContent = text; statusEl.className = `status ${kind}`; };
+
+  if (!token) setStatus('Lien incomplet : rescanne le code QR depuis l’extension.', 'error');
+
+  // Downscale on the phone: faster upload on cellular, and keeps images
+  // under the AI's size limits. createImageBitmap applies EXIF rotation.
+  async function compress(file) {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+  }
+
+  async function handle(files) {
+    if (!files.length || !token) return;
+    setStatus(`Envoi de ${files.length} photo(s)…`);
+    const form = new FormData();
+    for (const file of files) {
+      const blob = await compress(file).catch(() => file);
+      form.append('photos', blob, 'photo.jpg');
+      const li = document.createElement('li');
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(blob);
+      img.alt = '';
+      li.append(img);
+      thumbs.append(li);
+    }
+    try {
+      const res = await fetch(`/m/api/sessions/${encodeURIComponent(sessionId)}/photos`, {
+        method: 'POST', headers: { 'x-upload-token': token }, body: form,
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || res.statusText);
+      uploaded = body.count;
+      setStatus(`✅ ${uploaded} photo(s) reçue(s). Elles apparaissent déjà dans l’extension sur ton ordinateur.`, 'ok');
+      navigator.vibrate?.(40);
+    } catch (err) {
+      setStatus(`Échec : ${err.message}`, 'error');
+    }
+  }
+
+  for (const id of ['camera', 'gallery']) {
+    const input = document.getElementById(id);
+    input.addEventListener('change', () => { handle([...input.files]); input.value = ''; });
+  }
+})();
+</script>
+</body>
+</html>

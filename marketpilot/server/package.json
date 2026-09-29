@@ -1,0 +1,23 @@
+{
+  "name": "marketpilot-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MarketPilot — assistant IA pour créer, tarifer et relancer des annonces Facebook Marketplace",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "dev": "node --env-file-if-exists=.env --watch src/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
+    "express": "^5.2.1",
+    "multer": "^2.4.0",
+    "qrcode": "^1.5.4",
+    "zod": "^4.6.5"
+  }
+}
