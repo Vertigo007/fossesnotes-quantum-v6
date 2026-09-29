@@ -18,7 +18,12 @@ app.listen(config.port, () => {
   console.log(`MarketPilot en ligne sur ${config.publicUrl} (port ${config.port})`);
   console.log(`  IA : ${ai ? config.model : 'désactivée — définis ANTHROPIC_API_KEY'}`);
   console.log(`  Notifications : ${notifier.enabled ? `ntfy/${config.ntfyTopic}` : 'désactivées (NTFY_TOPIC)'}`);
-  console.log(`  Approbations mobiles : ${config.publicUrl}/m/approvals`);
+  console.log('');
+  console.log('  ┌─ À coller dans l’extension (onglet ⚙︎ Réglages) ─────────────');
+  console.log(`  │ Adresse du serveur : http://localhost:${config.port}`);
+  console.log(`  │ Jeton              : ${config.apiToken}`);
+  console.log('  └──────────────────────────────────────────────────────────────');
+  console.log('  Laisse cette fenêtre ouverte pendant que tu utilises MarketPilot.');
 });
 
 startScheduler({ store, notifier, publicUrl: config.publicUrl }, config.schedulerIntervalMin);

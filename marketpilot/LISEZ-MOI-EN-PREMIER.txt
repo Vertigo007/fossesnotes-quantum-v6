@@ -1,0 +1,103 @@
+MARKETPILOT — DÉMARRAGE RAPIDE
+==============================
+
+AVANT DE COMMENCER (une seule fois)
+-----------------------------------
+1. Installe Node.js, version « LTS » : https://nodejs.org
+2. Obtiens une clé API Anthropic : https://platform.claude.com
+   (Settings > API Keys > Create Key). Ajoute quelques dollars de crédit :
+   une annonce coûte environ 0,05 à 0,15 $.
+3. Utilise Google Chrome, connecté à ton compte Facebook.
+4. Ton cellulaire doit être sur le MÊME Wi-Fi que ton ordinateur.
+
+
+ÉTAPE 1 — DÉMARRER LE SERVEUR
+-----------------------------
+Windows : double-clique sur  DEMARRER-Windows.bat
+Mac     : clic droit sur DEMARRER-Mac.command > Ouvrir
+
+La première fois :
+  - l'installation prend environ 1 minute ;
+  - on te demande ta clé API Anthropic (colle-la puis Entrée) ;
+  - ntfy : fais Entrée pour passer (voir l'option plus bas) ;
+  - Windows peut demander d'autoriser Node.js dans le pare-feu :
+    coche « Réseaux privés » puis Autoriser. C'est nécessaire pour le cellulaire.
+
+La fenêtre affiche ensuite l'adresse du serveur et le jeton.
+LAISSE CETTE FENÊTRE OUVERTE pendant que tu utilises MarketPilot.
+
+
+ÉTAPE 2 — INSTALLER L'EXTENSION CHROME
+--------------------------------------
+1. Dans Chrome, va à :  chrome://extensions
+2. Active le « Mode développeur » (en haut à droite).
+3. Clique sur « Charger l'extension non empaquetée ».
+4. Choisis le dossier  marketpilot\extension
+5. Épingle l'icône MarketPilot (icône casse-tête dans la barre, puis l'épingle).
+6. Clique sur l'icône : le panneau s'ouvre à droite.
+7. Dans l'onglet ⚙︎ (Réglages), entre :
+     - Adresse du serveur : http://localhost:8787
+     - Jeton : celui affiché dans la fenêtre du serveur
+     - Ville Marketplace : ex. laval, montreal, quebec
+       (le mot qui apparaît dans facebook.com/marketplace/laval/)
+     - Secteur de ramassage : ex. Laval (Sainte-Rose)
+   puis clique « Enregistrer ». Tu dois voir « ✅ Connecté · IA active ».
+8. Scanne avec ton cellulaire le code QR « Approuver depuis ton cellulaire »
+   et ajoute la page à ton écran d'accueil.
+
+
+ÉTAPE 3 — CRÉER UNE ANNONCE
+---------------------------
+Onglet « Créer » :
+ 1. « Nouvelle annonce » : un code QR apparaît. Scanne-le avec l'appareil
+    photo de ton cell, puis prends 3 à 8 photos. Elles arrivent dans le panneau.
+    Glisse-les pour changer l'ordre ; la première est la couverture.
+ 2. « Analyser les photos » : l'IA identifie l'article, la catégorie et l'état.
+    Ajoute des notes si tu veux (année, défauts, accessoires inclus).
+ 3. « Analyser le marché » : Chrome lit les annonces semblables (20 secondes).
+    Clique sur une stratégie (Vendre vite / Prix du marché / Maximiser) ou
+    entre ton propre prix. Choisis ton PRIX PLANCHER, le minimum que tu acceptes.
+ 4. « Rédiger l'annonce » : relis et modifie au besoin.
+ 5. Choisis la stratégie de vente, puis « Enregistrer et remplir Marketplace ».
+    Facebook s'ouvre avec tout rempli : vérifie, puis clique « Publier ».
+
+
+ENSUITE : LE SUIVI AUTOMATIQUE
+------------------------------
+- Une fois par jour, clique « Synchroniser avec Facebook » dans l'onglet
+  « Annonces », ou ouvre la page « Vos annonces » sur Facebook.
+  Ça relie tes annonces et met à jour les clics.
+- Quand un acheteur t'écrit, clique « +1 message » sur l'annonce.
+  Le système ne baissera pas le prix d'une annonce qui a des acheteurs intéressés.
+- « Réponse IA » : colle le message de l'acheteur pour obtenir une réponse
+  toute prête (copiée automatiquement).
+- Onglet « Décisions » : les baisses de prix proposées. Tu approuves, tu
+  refuses ou tu changes le montant. Jamais sous ton plancher.
+- Les relances (« Renouveler ») se font toutes seules aux 7 jours quand
+  Chrome et le serveur sont ouverts.
+- Vendu ? Clique « Vendu » dans MarketPilot, et marque-le vendu sur Facebook.
+
+
+OPTIONNEL — NOTIFICATIONS SUR TON CELL
+--------------------------------------
+1. Installe l'app « ntfy » (iPhone ou Android).
+2. Abonne-toi à un sujet secret, ex. marketpilot-tonnom-8h3k2p.
+3. Ouvre marketpilot\server\.env avec le Bloc-notes et mets
+   NTFY_TOPIC=marketpilot-tonnom-8h3k2p
+4. Ferme la fenêtre du serveur et relance DEMARRER.
+   Tu recevras une notification pour chaque décision à prendre.
+
+
+PROBLÈMES FRÉQUENTS
+-------------------
+- « Serveur injoignable » : la fenêtre du serveur est fermée. Relance DEMARRER.
+- Le cell n'ouvre pas la page photos :
+    - vérifie que le cell est sur le même Wi-Fi ;
+    - autorise Node.js dans le pare-feu Windows (réseaux privés) ;
+    - si l'adresse dans server\.env (PUBLIC_URL) n'est pas la bonne IP,
+      corrige-la (ipconfig > Adresse IPv4).
+- Un champ n'est pas rempli sur Facebook : Facebook change souvent sa page.
+  Remplis-le à la main et note lequel, pour qu'on ajuste l'extension.
+- « IA inactive » : la clé API est manquante ou invalide dans server\.env.
+
+Pour tout recommencer à zéro : supprime server\.env et server\data.
