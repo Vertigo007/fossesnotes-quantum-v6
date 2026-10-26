@@ -5,16 +5,24 @@ import { api, getSettings, photoDataUrl } from './lib/api.js';
 
 const FB = 'https://www.facebook.com';
 const ACTION_ALARM = 'mp-actions';
+const QUEUE_ALARM = 'mp-queue';
 
+function scheduleAlarms() {
+  chrome.alarms.create(ACTION_ALARM, { periodInMinutes: 15, delayInMinutes: 1 });
+  // Drafts photographed on the phone wait for a market scan: check often.
+  chrome.alarms.create(QUEUE_ALARM, { periodInMinutes: 2, delayInMinutes: 0.5 });
+}
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
-  chrome.alarms.create(ACTION_ALARM, { periodInMinutes: 15, delayInMinutes: 1 });
+  scheduleAlarms();
 });
-chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create(ACTION_ALARM, { periodInMinutes: 15, delayInMinutes: 1 });
-});
+chrome.runtime.onStartup.addListener(scheduleAlarms);
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === QUEUE_ALARM) {
+    await processMarketQueue().catch((err) => console.warn('[MarketPilot] file éclair', err));
+    return;
+  }
   if (alarm.name !== ACTION_ALARM) return;
   await refreshBadge();
   const { autoExecute } = await getSettings();
@@ -92,12 +100,53 @@ async function buildFormData(listing, overrides = {}) {
 
 async function openCreate(listingId, { actionId, overrides } = {}) {
   const listing = await api(`/api/listings/${listingId}`);
+  if (!(listing.price > 0) && !overrides?.price) throw new Error('Cette annonce n’a pas encore de prix.');
   const { autoSubmit } = await getSettings();
   const data = { ...(await buildFormData(listing, overrides)), mode: 'create', autoSubmit, actionId, listingId };
-  return withTab(`${FB}/marketplace/create/item`, { active: !autoSubmit, keepOpen: !autoSubmit }, async (tab) => {
+  const report = await withTab(`${FB}/marketplace/create/item`, { active: !autoSubmit, keepOpen: !autoSubmit }, async (tab) => {
     const res = await sendToTab(tab.id, { type: 'mp:fill', data });
     if (!res?.ok) throw new Error(res?.error || 'Remplissage impossible');
     return res.report;
+  });
+  // Auto-submitted new listings go live now; otherwise the Publish click reports it.
+  if (report.submitted && !actionId) await api(`/api/listings/${listingId}`, { method: 'PATCH', body: { status: 'active' } });
+  return report;
+}
+
+// ------------------------------------------------------ mode éclair queue
+
+let queueRunning = null;
+
+/** Market-scans drafts the server has finished writing, one at a time. */
+// Kept short: a service worker event must finish within ~5 minutes.
+async function processMarketQueue({ limit = 3 } = {}) {
+  if (queueRunning) return queueRunning;
+  queueRunning = (async () => {
+    const { token } = await getSettings();
+    if (!token) return { processed: 0 };
+    const drafts = (await api('/api/listings')).filter((l) => l.status === 'draft' && l.pipeline?.stage === 'awaiting_market');
+    let processed = 0;
+    for (const draft of drafts.slice(0, limit)) {
+      const queries = (draft.item?.searchQueries?.length ? draft.item.searchQueries : [draft.item?.itemName || draft.title]).slice(0, 2);
+      try {
+        const listings = await marketScan({ queries });
+        const priced = await api(`/api/drafts/${draft.id}/market`, { method: 'POST', body: { listings } });
+        processed++;
+        if (priced.pipeline?.stage === 'ready') notify('Annonce prête ⚡', `${priced.title} — ${priced.price} $`);
+      } catch (err) {
+        console.warn('[MarketPilot] scan', draft.id, err.message);
+      }
+    }
+    return { processed, remaining: Math.max(0, drafts.length - processed) };
+  })().finally(() => { queueRunning = null; });
+  return queueRunning;
+}
+
+async function syncInbox() {
+  return withTab(`${FB}/marketplace/inbox/`, {}, async (tab) => {
+    const res = await sendToTab(tab.id, { type: 'mp:scrapeInbox' });
+    if (!res?.ok) throw new Error(res?.error || 'Lecture des messages impossible');
+    return res.result;
   });
 }
 
@@ -206,10 +255,20 @@ const handlers = {
   'mp:marketScan': (msg) => marketScan(msg),
   'mp:openCreate': (msg) => openCreate(msg.listingId),
   'mp:runActions': (msg) => runApprovedActions({ actionId: msg.actionId, force: true }),
-  'mp:syncNow': () => syncSelling(),
+  'mp:syncNow': async () => {
+    const selling = await syncSelling();
+    const inbox = await syncInbox().catch((err) => ({ error: err.message }));
+    return { ...selling, inbox };
+  },
+  'mp:processQueue': () => processMarketQueue(),
   'mp:refreshBadge': () => refreshBadge(),
   // From content scripts:
   'mp:syncSelling': (msg) => api('/api/listings/sync', { method: 'POST', body: { items: msg.items } }),
+  'mp:inboxSync': (msg) => api('/api/inbox/sync', { method: 'POST', body: { threads: msg.threads } }),
+  'mp:replyThread': (msg) => api('/api/reply', {
+    method: 'POST',
+    body: { fbId: msg.fbId || undefined, listingTitle: msg.listingTitle || undefined, history: msg.history },
+  }),
   'mp:submitted': async (msg) => {
     if (msg.actionId) {
       await api(`/api/actions/${msg.actionId}/complete`, { method: 'POST', body: { result: { confirmedByUser: true } } });

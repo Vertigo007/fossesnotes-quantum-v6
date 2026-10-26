@@ -13,6 +13,16 @@ MarketPilot crée tes annonces Marketplace à partir des photos prises avec ton 
                                  • relance / baisse / boost approuvés
 ```
 
+## Nouveautés v0.2
+
+- **⚡ Mode éclair et mode lot** : une app sur ton cell (à ajouter à l'écran d'accueil). Tu photographies un article et tu touches « Article suivant ». Pendant que tu passes au suivant, le serveur identifie l'article et rédige l'annonce. L'extension Chrome lit ensuite les prix du marché toute seule, aux 2 minutes, et fixe le prix selon ta stratégie. Tu retrouves une file d'annonces **prêtes**, avec 3 prix au choix, et un bouton **🚀 Tout publier** qui les ouvre une à une, remplies.
+- **📤 Publication depuis le cell** : les photos sont partagées vers l'app Facebook et le texte est copié. Pas besoin d'ordinateur.
+- **💬 Messages Marketplace** : la synchronisation compte les acheteurs et les messages non lus de chaque annonce. Une annonce qui reçoit des messages n'est jamais baissée.
+- **✨ Réponse IA dans Messenger** : un bouton dans chaque conversation Marketplace. L'IA lit toute la conversation, propose une réponse ou une contre-offre au-dessus de ton plancher et signale les arnaques. Le texte est inséré dans la zone de message, mais **jamais envoyé** sans toi.
+- **📈 Tableau de bord** : argent encaissé (total et 30 jours), articles vendus, délai moyen de vente, part du prix demandé obtenue, temps économisé.
+- **🌤 Photos plus claires** : correction automatique de la lumière sur le téléphone avant l'envoi.
+- **☁️ Hébergement en ligne** : image Docker et guide Render ([DEPLOIEMENT-EN-LIGNE.md](DEPLOIEMENT-EN-LIGNE.md)). En ligne, le serveur ajoute HTTPS et une protection contre les tentatives répétées sur le jeton.
+
 ## Fonctionnalités
 
 | | |
@@ -86,7 +96,7 @@ npm start
 ## Tests
 
 ```bash
-cd marketpilot/server && npm test                  # 24 tests : prix, stratégie, API complète
+cd marketpilot/server && npm test                  # 32 tests : prix, stratégie, mode éclair, messages, API
 # Test de bout en bout de l'extension (Chromium + fausses pages Facebook) :
 npm i -D playwright && node ../tools/e2e-extension.mjs   # CHROME_PATH=... si besoin
 ```
@@ -101,9 +111,9 @@ npm i -D playwright && node ../tools/e2e-extension.mjs   # CHROME_PATH=... si be
 ## Feuille de route — ce qu'on peut ajouter
 
 **Court terme (vendre plus, plus vite)**
-- Réponses automatiques dans Messenger (« Est-ce encore disponible ? ») avec prise de rendez-vous et rappel.
-- Détourage et amélioration des photos (fond blanc, lumière, recadrage 1:1).
-- Tableau de bord des ventes : profit (prix d'achat et prix vendu), délai moyen, meilleures catégories.
+- ~~Réponses IA dans Messenger~~ ✅ v0.2. Prochaine étape : prise de rendez-vous et rappel.
+- ~~Correction de la lumière~~ ✅ v0.2. Prochaine étape : détourage avec fond blanc pour la photo de couverture.
+- ~~Tableau de bord des ventes~~ ✅ v0.2. Prochaine étape : profit (prix d'achat et prix vendu), meilleures catégories.
 - Calendrier saisonnier : vendre les climatiseurs en mai et les pneus d'hiver en octobre.
 - Lots : l'IA propose de regrouper les petits articles qui ne se vendent pas seuls.
 
@@ -125,8 +135,11 @@ marketpilot/
 │   ├── src/pricing.js      Statistiques de marché, stratégies de prix
 │   ├── src/strategy.js     Relance / baisse / republication / boost (fonctions pures)
 │   ├── src/scheduler.js    Exécution périodique et notifications
+│   ├── src/pipeline.js     Mode éclair : photos → IA → prix du marché → prête
+│   ├── src/stats.js        Tableau de bord
 │   ├── src/app.js          Routes HTTP
-│   └── public/             Pages mobiles (photos, approbations)
+│   ├── public/             App mobile (mode lot, photos, approbations)
+│   └── Dockerfile          Hébergement en ligne
 ├── extension/              Extension Chrome MV3
 │   ├── background.js       Scan du marché, ouverture d'onglets, exécution des actions
 │   ├── sidepanel/          Interface principale

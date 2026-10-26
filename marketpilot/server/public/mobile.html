@@ -32,7 +32,8 @@
     </ul>
   </details>
 </main>
-<script>
+<script type="module">
+import { preparePhoto } from '/m/assets/capture.js';
 (() => {
   const sessionId = location.pathname.split('/').pop();
   const token = new URLSearchParams(location.hash.slice(1)).get('t');
@@ -43,17 +44,8 @@
 
   if (!token) setStatus('Lien incomplet : rescanne le code QR depuis l’extension.', 'error');
 
-  // Downscale on the phone: faster upload on cellular, and keeps images
-  // under the AI's size limits. createImageBitmap applies EXIF rotation.
-  async function compress(file) {
-    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
-  }
+  // Downscale + light correction on the phone (see capture.js).
+  const compress = (file) => preparePhoto(file, { enhance: true });
 
   async function handle(files) {
     if (!files.length || !token) return;

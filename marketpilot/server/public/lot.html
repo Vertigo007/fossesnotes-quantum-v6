@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b74e4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MarketPilot">
+<link rel="manifest" href="/m/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/m/assets/icon-192.png">
+<title>MarketPilot ⚡ Vendre</title>
+<link rel="stylesheet" href="/m/assets/mobile.css">
+<style>
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .topbar a { color: var(--accent); font-weight: 600; text-decoration: none; position: relative; }
+  .topbar .badge { position: absolute; top: -8px; right: -14px; background: var(--danger); color: #fff; font-size: 11px; border-radius: 99px; padding: 0 6px; }
+  .capture { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin: 12px 0; }
+  .capture h2 { margin: 0 0 6px; font-size: 1.05rem; display: flex; justify-content: space-between; }
+  .shoot { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+  .shoot .big-button { margin: 0; }
+  .thumbs li { position: relative; }
+  .thumbs li.uploading img { opacity: .45; }
+  .thumbs li.uploading::after { content: ""; position: absolute; inset: 0; margin: auto; width: 22px; height: 22px; border: 3px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  textarea { width: 100%; padding: 10px; font: inherit; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); resize: vertical; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .chip { flex: 1; margin: 0; padding: 9px 6px; border-radius: 99px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-weight: 600; font-size: .85rem; }
+  .chip[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip small { display: block; font-weight: 400; font-size: .7rem; opacity: .85; }
+  .feed h2 { font-size: 1rem; margin: 18px 0 8px; display: flex; justify-content: space-between; align-items: baseline; }
+  .draft { display: grid; grid-template-columns: 76px 1fr; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px; margin-bottom: 10px; }
+  .draft img { width: 76px; height: 76px; object-fit: cover; border-radius: 10px; background: var(--bg); }
+  .draft h3 { margin: 0; font-size: .95rem; line-height: 1.3; }
+  .draft .price { font-size: 1.3rem; font-weight: 700; margin: 2px 0; }
+  .draft .price small { font-size: .75rem; font-weight: 400; color: var(--muted); }
+  .stage { font-size: .8rem; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .stage.ready { color: var(--ok); } .stage.error { color: var(--danger); }
+  .stage .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  .draft .row button, .draft button { margin: 6px 0 0; padding: 9px 10px; font-size: .85rem; }
+  .draft .chips { margin: 6px 0 0; }
+  .draft .chip { padding: 6px 4px; font-size: .78rem; }
+  .full { grid-column: 1 / -1; }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); background: #1c1e21; color: #fff; padding: 12px 14px; border-radius: 12px; font-weight: 500; box-shadow: 0 8px 30px rgba(0,0,0,.3); transform: translateY(140%); visibility: hidden; transition: transform .25s, visibility .25s; z-index: 10; }
+  .toast.show { transform: none; visibility: visible; }
+  .switch { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <h1>⚡ MarketPilot</h1>
+    <a href="/m/approvals">Décisions<span id="pending-badge" class="badge" hidden></span></a>
+  </div>
+
+  <section id="login" hidden>
+    <p>Colle le jeton MarketPilot (onglet ⚙︎ de l’extension) :</p>
+    <input id="token" type="password" autocomplete="off" placeholder="Jeton" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border)">
+    <button id="save-token">Enregistrer sur ce téléphone</button>
+  </section>
+
+  <section id="app" hidden>
+    <div class="capture">
+      <h2><span>Article <span id="item-no">1</span></span><span class="muted small" id="photo-count"></span></h2>
+      <div class="shoot">
+        <label class="big-button" for="camera">📷 Photo</label>
+        <label class="big-button secondary" for="gallery">🖼 Galerie</label>
+      </div>
+      <input id="camera" type="file" accept="image/*" capture="environment" hidden>
+      <input id="gallery" type="file" accept="image/*" multiple hidden>
+      <ul id="thumbs" class="thumbs"></ul>
+      <textarea id="notes" rows="2" placeholder="Notes : année, défauts, accessoires… (🎤 dicte-les)"></textarea>
+      <div class="chips" role="group" aria-label="Stratégie">
+        <button class="chip" data-mode="fast">Vendre vite<small>−10 % / 3 j</small></button>
+        <button class="chip" data-mode="balanced">Équilibré<small>−7 % / 5 j</small></button>
+        <button class="chip" data-mode="max">Max $<small>−5 % / 7 j</small></button>
+      </div>
+      <label class="switch"><input id="enhance" type="checkbox" checked> Améliorer la lumière des photos</label>
+      <button id="next" disabled>Article suivant ➜</button>
+      <button id="discard" class="secondary" hidden>Annuler cet article</button>
+    </div>
+
+    <div class="feed">
+      <h2><span>Mes annonces en préparation</span><span class="muted small" id="feed-count"></span></h2>
+      <div id="drafts"></div>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" role="status"></div>
+
+<script type="module">
+import { preparePhoto } from '/m/assets/capture.js';
+
+const KEY = 'marketpilot.token';
+const PREFS = 'marketpilot.lot.prefs';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = {
+  get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const fromHash = new URLSearchParams(location.hash.slice(1)).get('k');
+let token = fromHash || (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
+if (fromHash) { try { localStorage.setItem(KEY, fromHash); } catch {} history.replaceState(null, '', location.pathname); }
+
+const prefs = store.get(PREFS, { mode: 'balanced', enhance: true, itemNo: 1 });
+let current = null; // { sessionId, uploadToken, photos: [] }
+const thumbCache = new Map();
+
+function toast(msg, ms = 3500) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+async function api(path, { method = 'GET', body, raw } = {}) {
+  const res = await fetch(path, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 401) { showLogin(); throw new Error('Jeton invalide'); }
+  if (raw) return res;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+function showLogin() { $('login').hidden = false; $('app').hidden = true; }
+
+// ------------------------------------------------------------- capture
+
+function renderCapture() {
+  $('item-no').textContent = prefs.itemNo;
+  const n = current?.photos.length || 0;
+  $('photo-count').textContent = n ? `${n} photo${n > 1 ? 's' : ''}` : '';
+  $('next').disabled = !n || current?.uploading > 0;
+  $('discard').hidden = !n;
+  for (const chip of document.querySelectorAll('[data-mode]')) chip.setAttribute('aria-pressed', String(chip.dataset.mode === prefs.mode));
+  $('enhance').checked = prefs.enhance;
+}
+
+async function ensureSession() {
+  if (current) return current;
+  const s = await api('/api/sessions', { method: 'POST' });
+  current = { sessionId: s.id, uploadToken: new URL(s.mobileUrl).hash.replace('#t=', ''), photos: [], uploading: 0 };
+  return current;
+}
+
+async function addFiles(files) {
+  if (!files.length) return;
+  const session = await ensureSession().catch((err) => { toast(err.message); return null; });
+  if (!session) return;
+  session.uploading += files.length;
+  renderCapture();
+  await Promise.all(files.map(async (file) => {
+    const li = document.createElement('li');
+    li.className = 'uploading';
+    li.innerHTML = '<img alt="">';
+    $('thumbs').append(li);
+    try {
+      const blob = await preparePhoto(file, { enhance: prefs.enhance }).catch(() => file);
+      li.querySelector('img').src = URL.createObjectURL(blob);
+      const form = new FormData();
+      form.append('photos', blob, 'photo.jpg');
+      const res = await fetch(`/m/api/sessions/${session.sessionId}/photos`, { method: 'POST', headers: { 'x-upload-token': session.uploadToken }, body: form });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Échec');
+      session.photos.push(li);
+      li.classList.remove('uploading');
+    } catch (err) {
+      li.remove();
+      toast(`Photo non envoyée : ${err.message}`);
+    } finally {
+      session.uploading--;
+      renderCapture();
+    }
+  }));
+  navigator.vibrate?.(30);
+}
+
+for (const id of ['camera', 'gallery']) {
+  $(id).addEventListener('change', (e) => { const files = [...e.target.files]; e.target.value = ''; addFiles(files); });
+}
+
+document.querySelector('.chips').addEventListener('click', (e) => {
+  const chip = e.target.closest('[data-mode]');
+  if (!chip) return;
+  prefs.mode = chip.dataset.mode;
+  store.set(PREFS, prefs);
+  renderCapture();
+});
+$('enhance').addEventListener('change', () => { prefs.enhance = $('enhance').checked; store.set(PREFS, prefs); });
+
+$('next').addEventListener('click', async () => {
+  if (!current?.photos.length) return;
+  $('next').disabled = true;
+  try {
+    await api('/api/drafts', { method: 'POST', body: { sessionId: current.sessionId, notes: $('notes').value.trim(), mode: prefs.mode } });
+    current = null;
+    $('thumbs').innerHTML = '';
+    $('notes').value = '';
+    prefs.itemNo += 1;
+    store.set(PREFS, prefs);
+    toast('⚡ Envoyé ! L’IA prépare l’annonce pendant que tu photographies le suivant.');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    loadDrafts();
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    renderCapture();
+  }
+});
+
+$('discard').addEventListener('click', () => {
+  if (!confirm('Retirer les photos de cet article ?')) return;
+  current = null;
+  $('thumbs').innerHTML = '';
+  renderCapture();
+});
+
+// ---------------------------------------------------------------- feed
+
+const STAGES = {
+  analyzing: ['🔍 Identification de l’article…', true],
+  writing: ['✍️ Rédaction de l’annonce…', true],
+  awaiting_market: ['📊 Prix du marché : ouvre Chrome sur ton ordi', true],
+  ready: ['✅ Prête à publier', false],
+  error: ['⚠️ ', false],
+};
+
+async function thumb(url) {
+  if (thumbCache.has(url)) return thumbCache.get(url);
+  const p = api(url, { raw: true }).then((r) => r.blob()).then((b) => URL.createObjectURL(b));
+  thumbCache.set(url, p);
+  return p;
+}
+
+function draftCard(l) {
+  const stage = l.pipeline?.stage || 'ready';
+  const [label, busy] = STAGES[stage] || [stage, false];
+  const ready = stage === 'ready';
+  const options = ready && l.priceOptions?.length
+    ? `<div class="chips">${l.priceOptions.map((o) => `<button class="chip" data-price="${o.price}" aria-pressed="${o.price === l.price}">${o.price} $<small>${esc(o.label)}</small></button>`).join('')}</div>`
+    : '';
+  const market = l.market?.stats ? `<small>médiane ${l.market.stats.median} $ · ${l.market.usedCount} comparables</small>` : l.priceSource === 'retail_estimate' ? '<small>estimé d’après le prix neuf</small>' : '';
+  return `<article class="draft" data-id="${l.id}">
+    <img data-src="${esc(l.photoUrls?.[0] || '')}" alt="">
+    <div>
+      <div class="stage ${stage}">${busy ? '<span class="dot"></span>' : ''}${esc(label)}${stage === 'error' ? esc(l.pipeline.error || '') : ''}</div>
+      <h3>${esc(l.title)}</h3>
+      ${ready ? `<div class="price">${l.price} $ ${market}</div>` : ''}
+    </div>
+    <div class="full">
+      ${options}
+      ${ready ? `<div class="row"><button data-act="share">📤 Publier depuis le cell</button><button class="secondary" data-act="published">C’est publié ✔</button></div>
+        <p class="muted small">Ou publie-la depuis l’ordi : un clic dans l’extension et tout est rempli.</p>` : ''}
+      ${stage === 'error' ? '<button class="secondary" data-act="retry">Réessayer</button>' : ''}
+    </div>
+  </article>`;
+}
+
+let pollTimer = null;
+async function loadDrafts() {
+  clearTimeout(pollTimer);
+  try {
+    const [listings, pending] = await Promise.all([api('/api/listings'), api('/api/actions?status=pending').catch(() => [])]);
+    const drafts = listings.filter((l) => l.status === 'draft' && l.pipeline);
+    $('drafts').innerHTML = drafts.length ? drafts.map(draftCard).join('') : '<p class="empty">Photographie ton premier article ☝️</p>';
+    $('feed-count').textContent = drafts.length ? `${drafts.filter((d) => d.pipeline.stage === 'ready').length}/${drafts.length} prêtes` : '';
+    $('pending-badge').hidden = !pending.length;
+    $('pending-badge').textContent = pending.length;
+    for (const img of document.querySelectorAll('img[data-src]')) {
+      if (img.dataset.src) thumb(img.dataset.src).then((u) => { img.src = u; }).catch(() => {});
+    }
+    const busy = drafts.some((d) => STAGES[d.pipeline.stage]?.[1]);
+    pollTimer = setTimeout(loadDrafts, busy ? 4000 : 20000);
+  } catch (err) {
+    pollTimer = setTimeout(loadDrafts, 10000);
+  }
+}
+
+// Share photos + text to the Facebook app (or any app) without a computer.
+async function shareFromPhone(l) {
+  const text = `${l.title}\n\n${l.description}`;
+  try { await navigator.clipboard.writeText(text); } catch {}
+  const files = await Promise.all((l.photoUrls || []).slice(0, 10).map(async (u, i) => {
+    const blob = await api(u, { raw: true }).then((r) => r.blob());
+    return new File([blob], `photo-${i + 1}.jpg`, { type: blob.type || 'image/jpeg' });
+  }));
+  if (navigator.canShare?.({ files })) {
+    toast('Texte copié ✔ — choisis Facebook, puis colle le texte dans la description.', 6000);
+    await navigator.share({ files, title: l.title }).catch(() => {});
+  } else {
+    toast('Texte copié ✔. Ton navigateur ne peut pas partager les photos : publie depuis l’ordi.', 6000);
+  }
+}
+
+$('drafts').addEventListener('click', async (e) => {
+  const card = e.target.closest('.draft');
+  if (!card) return;
+  const id = card.dataset.id;
+  const priceBtn = e.target.closest('[data-price]');
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  try {
+    if (priceBtn) {
+      await api(`/api/listings/${id}`, { method: 'PATCH', body: { price: Number(priceBtn.dataset.price) } });
+      navigator.vibrate?.(20);
+    } else if (act === 'share') {
+      const l = await api(`/api/listings/${id}`);
+      await shareFromPhone(l);
+      return;
+    } else if (act === 'published') {
+      await api(`/api/listings/${id}`, { method: 'PATCH', body: { status: 'active' } });
+      toast('🚀 En ligne ! Le suivi automatique démarre.');
+    } else if (act === 'retry') {
+      await api(`/api/drafts/${id}/retry`, { method: 'POST' });
+    } else {
+      return;
+    }
+    loadDrafts();
+  } catch (err) {
+    toast(err.message);
+  }
+});
+
+$('save-token').addEventListener('click', () => {
+  token = $('token').value.trim();
+  try { localStorage.setItem(KEY, token); } catch {}
+  boot();
+});
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && token) loadDrafts(); });
+
+function boot() {
+  if (!token) return showLogin();
+  $('login').hidden = true;
+  $('app').hidden = false;
+  renderCapture();
+  loadDrafts();
+}
+boot();
+</script>
+</body>
+</html>

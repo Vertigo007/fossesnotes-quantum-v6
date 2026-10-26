@@ -50,7 +50,8 @@ Style des annonces qui vendent sur Marketplace :
 - Termine par la logistique : secteur de ramassage, livraison si offerte, mode de paiement (comptant ou virement Interac), "Premier arrivé, premier servi" si pertinent.
 - En français québécois naturel (ex. "Ramassage à", "comme neuf", "fonctionne parfaitement", "pas sérieux s'abstenir" seulement si le ton est ferme). Pas de phrases marketing ni de superlatifs vides.
 - N'invente jamais de caractéristiques : si une info n'est pas fournie ni visible, ne la mentionne pas.
-- N'inclus jamais de numéro de téléphone, courriel, adresse exacte ni lien externe (Facebook retire ces annonces).`;
+- N'inclus jamais de numéro de téléphone, courriel, adresse exacte ni lien externe (Facebook retire ces annonces).
+- N'écris jamais le montant du prix dans la description : il est affiché dans le champ Prix de Facebook et peut changer. "Prix discutable" ou "prix ferme" est correct.`;
 
 const categoryList = CATEGORIES.map((c) => `${c.id} = ${c.fr}`).join('\n');
 const conditionList = CONDITIONS.map((c) => `${c.id} = ${c.fr}`).join('\n');
@@ -120,7 +121,7 @@ ${conditionList}`,
     const text = `Rédige l'annonce.
 Langue : ${lang === 'en' ? 'anglais (Canada)' : 'français québécois'}
 Ton : ${{ friendly: 'amical et chaleureux', firm: 'direct et ferme', short: 'très court, style liste' }[tone] || tone}
-Prix : ${price} $ ${negotiable ? '(négociable — ne pas l’écrire en gros, juste "prix discutable" à la fin)' : '(prix ferme)'}
+Prix : ${price != null ? `${price} $ ` : ''}${negotiable ? '(négociable — écrire seulement "prix discutable" à la fin)' : '(prix ferme)'}
 Secteur de ramassage : ${pickupArea || '(non précisé — ne pas en inventer)'}
 Livraison possible : ${delivery ? 'oui, selon la distance' : 'non'}
 Notes du vendeur : ${extraNotes || '(aucune)'}
@@ -153,12 +154,20 @@ ${lines}`;
   }
 
   /**
-   * @param {{listing: object, buyerMessage: string, floorPrice?: number, lang?: string}} input
+   * @param {{listing: object, buyerMessage?: string, history?: Array<{from: 'buyer'|'me', text: string}>,
+   *          floorPrice?: number, lang?: string}} input
    */
-  async draftReply({ listing, buyerMessage, floorPrice, lang = 'fr' }) {
-    const text = `Annonce : ${listing.title} — ${listing.price} $ (plancher confidentiel : ${floorPrice ?? 'non défini'} $ — ne jamais le révéler, ne jamais accepter en dessous).
+  async draftReply({ listing, buyerMessage = '', history = [], floorPrice, lang = 'fr' }) {
+    const convo = history.length
+      ? history.slice(-12).map((m) => `${m.from === 'me' ? 'Moi (vendeur)' : 'Acheteur'} : ${m.text}`).join('\n')
+      : `Acheteur : ${buyerMessage}`;
+    const text = `Annonce : ${listing.title}${listing.price ? ` — ${listing.price} $` : ''} (plancher confidentiel : ${floorPrice ?? 'non défini'} $ — ne jamais le révéler, ne jamais accepter en dessous).
 Secteur : ${listing.pickupArea || 'non précisé'}
-Message de l'acheteur : """${buyerMessage}"""
+Conversation (la plus récente en dernier) :
+"""
+${convo}
+"""
+Réponds au dernier message de l'acheteur.
 
 Rédige une réponse courte (1 à 3 phrases), ${lang === 'en' ? 'en anglais' : 'en français québécois'}, naturelle, qui fait avancer la vente (proposer un moment de ramassage).
 Si c'est une offre sous le plancher, fais une contre-offre polie au-dessus du plancher.

@@ -9,7 +9,8 @@ process.env.TZ = process.env.TZ || 'America/Toronto';
 export const config = {
   port: Number(process.env.PORT) || 8787,
   // Public URL your phone can reach (LAN IP, ngrok, Render, etc.). Used in QR codes.
-  publicUrl: (process.env.PUBLIC_URL || `http://localhost:${Number(process.env.PORT) || 8787}`).replace(/\/$/, ''),
+  // Render sets RENDER_EXTERNAL_URL automatically.
+  publicUrl: (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${Number(process.env.PORT) || 8787}`).replace(/\/$/, ''),
   // Shared secret between the server, the extension and your phone.
   apiToken: process.env.MARKETPILOT_TOKEN || '',
   dataDir: path.resolve(process.env.DATA_DIR || path.join(here, '..', 'data')),

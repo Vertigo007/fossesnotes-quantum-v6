@@ -61,6 +61,7 @@ async function photoUrl(photo) {
 function showTab(name) {
   for (const btn of document.querySelectorAll('[role=tab]')) btn.setAttribute('aria-selected', String(btn.dataset.tab === name));
   for (const sec of document.querySelectorAll('.tab')) sec.hidden = sec.id !== `tab-${name}`;
+  if (name === 'create') loadQueue();
   if (name === 'listings') loadListings();
   if (name === 'decisions') loadDecisions();
   if (name === 'settings') loadSettings();
@@ -119,6 +120,7 @@ async function renderPhotos() {
     list.append(li);
   }
   $('step-analyze').hidden = !(draft.photos || []).length;
+  $('to-eclair').hidden = !(draft.photos || []).length || Boolean(draft.item);
 }
 
 $('photos').addEventListener('click', async (e) => {
@@ -361,6 +363,7 @@ $('save-fill').addEventListener('click', (e) => busy(e.currentTarget, async () =
 // ---------------------------------------------------------- render all
 
 function renderCreate() {
+  if (draft.sessionId) $('manual').open = true;
   $('session').hidden = !draft.sessionId;
   $('new-session').textContent = draft.sessionId ? 'Recommencer une nouvelle annonce' : 'Nouvelle annonce';
   if (draft.sessionId) {
@@ -379,13 +382,200 @@ function renderCreate() {
   if (!draft.item) { for (const id of ['step-market', 'step-copy', 'step-plan']) $(id).hidden = true; }
 }
 
+// ========================================================== MODE ÉCLAIR
+
+const QSTAGES = {
+  analyzing: ['Identification…', true],
+  writing: ['Rédaction…', true],
+  awaiting_market: ['Prix du marché…', true],
+  ready: ['Prête', false],
+  error: ['Erreur : ', false],
+};
+let queueTimer = null;
+let lastQueueKick = 0;
+let publishing = null; // { stop: boolean }
+const openEdits = new Set();
+
+function queueCard(l) {
+  const stage = l.pipeline?.stage || 'ready';
+  const [label, busy] = QSTAGES[stage] || [stage, false];
+  const ready = stage === 'ready';
+  const opts = ready && l.priceOptions?.length
+    ? `<div class="opts">${l.priceOptions.map((o) => `<button class="opt" data-price="${o.price}" aria-pressed="${o.price === l.price}">${money(o.price)}<small>${esc(o.label)}</small></button>`).join('')}</div>` : '';
+  const marketNote = l.market?.stats ? `<small>médiane ${money(l.market.stats.median)} · ${l.market.usedCount} comp.</small>`
+    : l.priceSource === 'retail_estimate' ? '<small>estimé (prix neuf)</small>' : '';
+  const editing = openEdits.has(l.id);
+  return `<article class="qcard" data-id="${l.id}">
+    <img data-photo="${esc(l.photoUrls?.[0] || '')}" alt="">
+    <div>
+      <div class="qstage ${stage}">${busy ? '<span class="dot"></span>' : ''}${esc(label)}${stage === 'error' ? esc(l.pipeline.error || '') : ''}</div>
+      <h4>${esc(l.title)}</h4>
+      ${ready ? `<div class="qprice">${money(l.price)} ${marketNote}</div>` : ''}
+    </div>
+    <div class="full">
+      ${opts}
+      ${editing ? `<div class="qedit">
+        <label>Titre<input data-field="title" value="${esc(l.title)}" maxlength="100"></label>
+        <div class="grid2"><label>Prix<input data-field="price" type="number" value="${esc(l.price)}"></label>
+        <label>Plancher<input data-field="floorPrice" type="number" value="${esc(l.floorPrice)}"></label></div>
+        <label>Description<textarea data-field="description" rows="6">${esc(l.description)}</textarea></label>
+        <button class="small" data-act="save">Enregistrer</button></div>` : ''}
+      ${ready ? `<button class="small" data-act="publish">Publier</button><button class="small secondary" data-act="edit">${editing ? 'Fermer' : 'Modifier'}</button>` : ''}
+      ${stage === 'error' ? '<button class="small" data-act="retry">Réessayer</button>' : ''}
+      ${stage === 'awaiting_market' ? '<button class="small secondary" data-act="scan">Scanner maintenant</button>' : ''}
+      <button class="small danger" data-act="delete">Supprimer</button>
+    </div>
+  </article>`;
+}
+
+async function loadQueue() {
+  clearTimeout(queueTimer);
+  try {
+    const drafts = (await api('/api/listings')).filter((l) => l.status === 'draft' && l.pipeline);
+    $('queue').innerHTML = drafts.length ? drafts.map(queueCard).join('')
+      : '<p class="muted small">Envoie des photos depuis ton cell (📱) : les annonces terminées apparaîtront ici, prêtes à publier.</p>';
+    for (const img of $('queue').querySelectorAll('img[data-photo]')) {
+      const url = img.dataset.photo;
+      if (url) photoUrl({ id: url, url }).then((u) => { img.src = u; }).catch(() => {});
+    }
+    const ready = drafts.filter((d) => d.pipeline.stage === 'ready').length;
+    $('publish-all').hidden = !ready && !publishing;
+    if (!publishing) $('publish-all').textContent = `🚀 Tout publier (${ready})`;
+    // The background worker scans Marketplace for drafts waiting on prices.
+    if (drafts.some((d) => d.pipeline.stage === 'awaiting_market') && Date.now() - lastQueueKick > 20000) {
+      lastQueueKick = Date.now();
+      bg('mp:processQueue').then(loadQueue).catch(() => {});
+    }
+    const busy = drafts.some((d) => QSTAGES[d.pipeline.stage]?.[1]);
+    queueTimer = setTimeout(() => { if (!$('tab-create').hidden && !document.hidden) loadQueue(); else queueTimer = setTimeout(loadQueue, 15000); }, busy ? 5000 : 20000);
+  } catch (err) {
+    $('queue').innerHTML = `<p class="muted small">${esc(err.message)}</p>`;
+  }
+}
+
+$('queue').addEventListener('click', async (e) => {
+  const card = e.target.closest('.qcard');
+  if (!card) return;
+  const id = card.dataset.id;
+  const opt = e.target.closest('[data-price]');
+  const btn = e.target.closest('[data-act]');
+  if (opt) {
+    await api(`/api/listings/${id}`, { method: 'PATCH', body: { price: Number(opt.dataset.price) } }).catch((err) => flash(err.message, 'error'));
+    return loadQueue();
+  }
+  if (!btn) return;
+  const act = btn.dataset.act;
+  if (act === 'edit') { openEdits.has(id) ? openEdits.delete(id) : openEdits.add(id); return loadQueue(); }
+  await busy(btn, async () => {
+    if (act === 'publish') {
+      const report = await bg('mp:openCreate', { listingId: id });
+      const missing = report?.missing?.length ? ` À compléter : ${report.missing.join(', ')}.` : '';
+      flash(`Formulaire rempli ✅${missing}`, missing ? 'error' : 'info', 8000);
+    } else if (act === 'save') {
+      const body = {};
+      for (const input of card.querySelectorAll('[data-field]')) {
+        body[input.dataset.field] = input.type === 'number' ? Number(input.value) : input.value;
+      }
+      await api(`/api/listings/${id}`, { method: 'PATCH', body });
+      openEdits.delete(id);
+    } else if (act === 'retry') {
+      await api(`/api/drafts/${id}/retry`, { method: 'POST' });
+    } else if (act === 'scan') {
+      lastQueueKick = Date.now();
+      flash('Lecture de Marketplace… (≈ 30 s)', 'info', 0);
+      await bg('mp:processQueue');
+      $('flash').hidden = true;
+    } else if (act === 'delete') {
+      if (!confirm('Supprimer cette annonce en préparation ?')) return;
+      await api(`/api/listings/${id}`, { method: 'DELETE' });
+    }
+  });
+  loadQueue();
+});
+
+// Publishes ready drafts one by one; the next opens once you've clicked
+// « Publier » on the current one. Runs here (not in the service worker)
+// because waiting on the user can exceed a worker's lifetime.
+$('publish-all').addEventListener('click', async () => {
+  if (publishing) { publishing.stop = true; $('publish-all').textContent = 'Arrêt après celle-ci…'; return; }
+  publishing = { stop: false };
+  try {
+    const ready = (await api('/api/listings')).filter((l) => l.status === 'draft' && l.pipeline?.stage === 'ready');
+    for (const [i, draft] of ready.entries()) {
+      if (publishing.stop) break;
+      $('publish-all').textContent = `Publication ${i + 1}/${ready.length} — arrêter`;
+      const report = await bg('mp:openCreate', { listingId: draft.id });
+      if (!report?.submitted) {
+        flash(`« ${draft.title} » : vérifie l’onglet Facebook puis clique « Publier ». La suivante s’ouvrira ensuite.`, 'info', 0);
+        const deadline = Date.now() + 10 * 60000;
+        let live = false;
+        while (!live && !publishing.stop && Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 2500));
+          live = (await api(`/api/listings/${draft.id}`)).status !== 'draft';
+        }
+        if (!live) break;
+      }
+      await new Promise((r) => setTimeout(r, 3000 + Math.random() * 3000));
+    }
+    flash('Publication terminée 🚀');
+  } catch (err) {
+    flash(err.message, 'error', 8000);
+  } finally {
+    publishing = null;
+    loadQueue();
+  }
+});
+
+$('phone-lot-toggle').addEventListener('click', async () => {
+  const box = $('phone-lot');
+  box.hidden = !box.hidden;
+  if (box.hidden || $('lot-qr').innerHTML) return;
+  const s = await getSettings();
+  const base = meta?.publicUrl || s.serverUrl;
+  if (/localhost|127\.0\.0\.1/.test(base)) {
+    $('lot-qr').innerHTML = '';
+    box.querySelector('p').textContent = 'Ton cell ne peut pas joindre « localhost ». Mets l’adresse Wi-Fi de ton ordi (PUBLIC_URL dans server/.env) ou héberge le serveur en ligne.';
+    return;
+  }
+  const { svg } = await api('/api/qr', { method: 'POST', body: { text: `${base}/m/lot#k=${s.token}` } });
+  $('lot-qr').innerHTML = svg;
+});
+
+$('to-eclair').addEventListener('click', (e) => busy(e.currentTarget, async () => {
+  await api('/api/drafts', {
+    method: 'POST',
+    body: { sessionId: draft.sessionId, notes: $('notes').value, mode: document.querySelector('input[name=mode]:checked').value, pickupArea: $('pickup').value || undefined },
+  });
+  draft = {};
+  await saveDraft();
+  renderCreate();
+  $('manual').open = false;
+  flash('⚡ L’IA s’en occupe : l’annonce apparaîtra prête dans la file.');
+  loadQueue();
+}));
+
 // ======================================================== LISTINGS TAB
 
 const STATUS = { draft: 'Brouillon', active: 'En ligne', pending: 'En attente', sold: 'Vendu', archived: 'Archivé' };
 
+function renderDashboard(st) {
+  const hours = st.minutesSaved >= 60 ? `${Math.round(st.minutesSaved / 6) / 10} h` : `${st.minutesSaved} min`;
+  const tiles = [
+    ['hero', money(st.revenue), `encaissés · ${money(st.revenue30d)} ces 30 derniers jours`],
+    ['', st.soldCount, 'articles vendus'],
+    ['', st.avgDaysToSell != null ? `${st.avgDaysToSell} j` : '—', 'délai moyen de vente'],
+    ['', st.activeCount, `en ligne · ${money(st.activeValue)}`],
+    ['', `≈ ${hours}`, `économisées · ${st.automatedActions} actions auto`],
+  ];
+  if (st.priceRealization != null) tiles.push(['', `${Math.round(st.priceRealization * 100)} %`, 'du prix demandé obtenu']);
+  if (st.readyCount) tiles.push(['', st.readyCount, 'prêtes à publier ⚡']);
+  $('dashboard').innerHTML = tiles.map(([cls, v, label]) => `<div class="tile ${cls}"><b>${esc(v)}</b><span>${esc(label)}</span></div>`).join('');
+}
+
 async function loadListings() {
+  api('/api/stats').then(renderDashboard).catch(() => { $('dashboard').innerHTML = ''; });
   try {
-    const listings = await api('/api/listings');
+    const listings = (await api('/api/listings')).filter((l) => !(l.status === 'draft' && l.pipeline));
     $('listings').innerHTML = listings.length ? listings.map(listingCard).join('') : '<p class="empty">Aucune annonce pour l’instant.</p>';
   } catch (err) {
     $('listings').innerHTML = `<p class="empty">${esc(err.message)}</p>`;
@@ -401,7 +591,7 @@ function listingCard(l) {
     <span class="pill ${l.status}">${STATUS[l.status] || l.status}</span>
     <h4>${esc(l.title)}</h4>
     <div class="meta">${money(l.price)} · plancher ${money(l.floorPrice)}${days != null ? ` · ${days} j en ligne` : ''}
-      ${s.views != null ? ` · ${s.views} clics` : ''} · ${s.messages || 0} message(s)</div>
+      ${s.views != null ? ` · ${s.views} clics` : ''} · ${s.messages || 0} acheteur(s)${s.unread ? `<span class="unread">${s.unread} non lu${s.unread > 1 ? 's' : ''}</span>` : ''}</div>
     ${ladder}
     <div>
       ${l.status === 'draft' ? '<button class="small" data-act="fill">Remplir sur Facebook</button>' : ''}
@@ -457,7 +647,8 @@ $('listings').addEventListener('click', async (e) => {
 $('sync').addEventListener('click', (e) => busy(e.currentTarget, async () => {
   const res = await bg('mp:syncNow');
   const matched = res.results.filter((r) => r.matched).length;
-  flash(`${matched} annonce(s) synchronisée(s) sur ${res.results.length} trouvée(s) sur Facebook.`);
+  const inbox = res.inbox?.matched != null ? ` · messages : ${res.inbox.matched} annonce(s) avec acheteurs` : '';
+  flash(`${matched} annonce(s) synchronisée(s) sur ${res.results.length} trouvée(s) sur Facebook${inbox}.`);
   loadListings();
 }));
 
@@ -580,6 +771,7 @@ $('s-save').addEventListener('click', (e) => busy(e.currentTarget, async () => {
     return;
   }
   renderCreate();
+  loadQueue();
   const pending = await api('/api/actions?status=pending').catch(() => []);
   $('decision-count').hidden = !pending.length;
   $('decision-count').textContent = pending.length;

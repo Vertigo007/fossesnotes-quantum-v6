@@ -46,36 +46,60 @@ LAISSE CETTE FENÊTRE OUVERTE pendant que tu utilises MarketPilot.
    et ajoute la page à ton écran d'accueil.
 
 
-ÉTAPE 3 — CRÉER UNE ANNONCE
----------------------------
-Onglet « Créer » :
- 1. « Nouvelle annonce » : un code QR apparaît. Scanne-le avec l'appareil
-    photo de ton cell, puis prends 3 à 8 photos. Elles arrivent dans le panneau.
-    Glisse-les pour changer l'ordre ; la première est la couverture.
- 2. « Analyser les photos » : l'IA identifie l'article, la catégorie et l'état.
-    Ajoute des notes si tu veux (année, défauts, accessoires inclus).
- 3. « Analyser le marché » : Chrome lit les annonces semblables (20 secondes).
-    Clique sur une stratégie (Vendre vite / Prix du marché / Maximiser) ou
-    entre ton propre prix. Choisis ton PRIX PLANCHER, le minimum que tu acceptes.
- 4. « Rédiger l'annonce » : relis et modifie au besoin.
- 5. Choisis la stratégie de vente, puis « Enregistrer et remplir Marketplace ».
-    Facebook s'ouvre avec tout rempli : vérifie, puis clique « Publier ».
+ÉTAPE 3 — MODE ÉCLAIR (la façon rapide)
+---------------------------------------
+Sur ton cellulaire :
+ 1. Dans l'extension, onglet « Créer », clique « 📱 Sur mon cell » et scanne
+    le code QR. Sur le téléphone, choisis « Ajouter à l'écran d'accueil » :
+    MarketPilot devient une app.
+ 2. Pour chaque article : 📷 Photo (3 à 8 photos), une note si tu veux
+    (touche 🎤 sur ton clavier pour dicter), puis « Article suivant ».
+    Enchaîne tous tes articles : l'IA travaille pendant que tu photographies.
+ 3. Pour chaque article, l'IA identifie l'article, rédige l'annonce et choisit
+    la catégorie et l'état. Chrome lit ensuite les prix du marché tout seul
+    (aux 2 minutes) et fixe le prix selon ta stratégie (Vendre vite /
+    Équilibré / Max $).
+
+Pour publier :
+ - Sur l'ordi : onglet « Créer », bouton « 🚀 Tout publier ». Chaque annonce
+   s'ouvre remplie ; tu cliques « Publier » sur Facebook et la suivante
+   s'ouvre toute seule.
+ - Ou directement du cell : « 📤 Publier depuis le cell » partage les photos
+   vers l'app Facebook et copie le texte ; colle-le dans la description.
+   Touche ensuite « C'est publié ✔ ».
+
+Tu peux changer le prix d'un seul toucher (3 choix) ou cliquer « Modifier »
+dans l'extension avant de publier.
+
+Mode détaillé : si tu veux tout contrôler étape par étape, ouvre
+« Mode détaillé » dans l'onglet « Créer ».
 
 
 ENSUITE : LE SUIVI AUTOMATIQUE
 ------------------------------
-- Une fois par jour, clique « Synchroniser avec Facebook » dans l'onglet
-  « Annonces », ou ouvre la page « Vos annonces » sur Facebook.
-  Ça relie tes annonces et met à jour les clics.
-- Quand un acheteur t'écrit, clique « +1 message » sur l'annonce.
-  Le système ne baissera pas le prix d'une annonce qui a des acheteurs intéressés.
-- « Réponse IA » : colle le message de l'acheteur pour obtenir une réponse
-  toute prête (copiée automatiquement).
+- Une fois par jour, clique « Synchroniser avec Facebook » (onglet
+  « Annonces »). Ça met à jour les clics ET compte tes acheteurs dans
+  Messenger. Le système ne baisse jamais le prix d'une annonce qui a des
+  acheteurs intéressés.
+- Dans une conversation Marketplace sur Facebook, clique le bouton
+  « ✨ Réponse IA » (en bas à droite). La réponse est écrite dans la zone de
+  message : tu relis et tu appuies sur Entrée. Une offre trop basse reçoit une
+  contre-offre au-dessus de ton plancher, et les arnaques sont signalées.
+- Onglet « Annonces » : tes ventes, ton argent encaissé, ton délai moyen de
+  vente et le temps économisé.
 - Onglet « Décisions » : les baisses de prix proposées. Tu approuves, tu
-  refuses ou tu changes le montant. Jamais sous ton plancher.
+  refuses ou tu changes le montant, aussi depuis ton cell. Jamais sous ton
+  plancher.
 - Les relances (« Renouveler ») se font toutes seules aux 7 jours quand
   Chrome et le serveur sont ouverts.
 - Vendu ? Clique « Vendu » dans MarketPilot, et marque-le vendu sur Facebook.
+
+
+PLUS DE FENÊTRE À GARDER OUVERTE
+--------------------------------
+Pour que ton cell fonctionne partout et que le serveur tourne 24 h sur 24,
+héberge-le en ligne (environ 7 $ US par mois). Suis le guide
+DEPLOIEMENT-EN-LIGNE.md.
 
 
 OPTIONNEL — NOTIFICATIONS SUR TON CELL
@@ -91,7 +115,7 @@ OPTIONNEL — NOTIFICATIONS SUR TON CELL
 PROBLÈMES FRÉQUENTS
 -------------------
 - « Serveur injoignable » : la fenêtre du serveur est fermée. Relance DEMARRER.
-- Le cell n'ouvre pas la page photos :
+- Le cell n'ouvre pas la page photos ou l'app :
     - vérifie que le cell est sur le même Wi-Fi ;
     - autorise Node.js dans le pare-feu Windows (réseaux privés) ;
     - si l'adresse dans server\.env (PUBLIC_URL) n'est pas la bonne IP,

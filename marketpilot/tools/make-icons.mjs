@@ -71,4 +71,7 @@ function png(size) {
 
 const out = new URL('../extension/icons/', import.meta.url);
 for (const size of [16, 48, 128]) fs.writeFileSync(new URL(`icon${size}.png`, out), png(size));
+// Phone home-screen icons (PWA).
+const web = new URL('../server/public/assets/', import.meta.url);
+for (const size of [192, 512]) fs.writeFileSync(new URL(`icon-${size}.png`, web), png(size));
 console.log('icons written');

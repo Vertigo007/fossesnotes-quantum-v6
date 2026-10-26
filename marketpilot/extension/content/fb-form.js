@@ -52,6 +52,9 @@
 
   async function fill(data) {
     const report = { filled: [], missing: [], submitted: false };
+    // Watch for the user's Publish/Update click from the start: they may
+    // click before every field is done.
+    if (!data.autoSubmit) watchSubmit(data.actionId, data.listingId);
     await MP.waitFor(() => MP.findField(LABELS.price) || MP.findField(LABELS.title), { timeout: 20000 });
 
     if (data.photos?.length) {
@@ -78,7 +81,6 @@
       }
       report.submitted = true;
     } else {
-      watchSubmit(data.actionId, data.listingId);
       const missing = report.missing.length ? ` À compléter : ${report.missing.join(', ')}.` : '';
       MP.highlight(submit, `MarketPilot a rempli l’annonce.${missing} Vérifie puis clique sur « ${data.mode === 'edit' ? 'Mettre à jour' : 'Publier'} ».`);
     }

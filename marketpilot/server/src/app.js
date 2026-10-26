@@ -14,10 +14,12 @@ import { CATEGORIES, CONDITIONS, getCategory, getCondition } from './categories.
 import { PLAN_PRESETS, buildPlan, priceLadder, applyCompletedAction } from './strategy.js';
 import { runStrategy } from './scheduler.js';
 import { AIRefusalError } from './ai.js';
+import { IMAGE_TYPES, photoStore } from './photos.js';
+import { createPipeline } from './pipeline.js';
+import { computeStats } from './stats.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(here, '..', 'public');
-const IMAGE_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 
 const safeEqual = (a, b) => {
   const ba = Buffer.from(String(a));
@@ -46,7 +48,19 @@ function validate(schema, body) {
 export function createApp({ store, ai, notifier, config }) {
   const app = express();
   app.disable('x-powered-by');
+  // Behind Render/Fly/ngrok the client IP comes from X-Forwarded-For.
+  app.set('trust proxy', 1);
   app.use(express.json({ limit: '2mb' }));
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('X-Frame-Options', 'DENY');
+    next();
+  });
+
+  const photos = photoStore({ dataDir: config.dataDir, store });
+  const pipeline = createPipeline({ store, ai, photos, notifier, publicUrl: config.publicUrl });
+  app.locals.pipeline = pipeline;
 
   // CORS: the extension (chrome-extension://) and the mobile pages call the API.
   app.use((req, res, next) => {
@@ -58,10 +72,22 @@ export function createApp({ store, ai, notifier, config }) {
     next();
   });
 
+  // Once the server is online, slow down token guessing: 20 failures per
+  // 15 minutes per IP, then 429.
+  const failures = new Map();
+  const FAIL_WINDOW = 15 * 60 * 1000;
   const requireToken = (req, _res, next) => {
+    const now = Date.now();
+    const entry = failures.get(req.ip);
+    if (entry && now - entry.since < FAIL_WINDOW && entry.count >= 20) return next(new HttpError(429, 'Trop de tentatives, réessaie plus tard.'));
     const header = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-    if (!token || !safeEqual(token, config.apiToken)) return next(new HttpError(401, 'Jeton invalide'));
+    if (!token || !safeEqual(token, config.apiToken)) {
+      const fresh = !entry || now - entry.since >= FAIL_WINDOW;
+      failures.set(req.ip, { since: fresh ? now : entry.since, count: fresh ? 1 : entry.count + 1 });
+      if (failures.size > 5000) failures.clear();
+      return next(new HttpError(401, 'Jeton invalide'));
+    }
     next();
   };
 
@@ -70,8 +96,8 @@ export function createApp({ store, ai, notifier, config }) {
     return ai;
   };
 
-  const photoDir = (sessionId) => path.join(config.dataDir, 'uploads', sessionId);
-  const photoPath = (sessionId, photo) => path.join(photoDir(sessionId), `${photo.id}.${IMAGE_TYPES[photo.mediaType]}`);
+  const photoDir = photos.dir;
+  const photoPath = photos.file;
 
   function getSession(id) {
     const session = store.get('sessions', id);
@@ -89,6 +115,8 @@ export function createApp({ store, ai, notifier, config }) {
   app.get('/api/health', (_req, res) => res.json({ ok: true, ai: Boolean(ai), notifications: Boolean(notifier?.enabled) }));
   app.get('/m/s/:id', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'mobile.html')));
   app.get('/m/approvals', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'approvals.html')));
+  app.get('/m/lot', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'lot.html')));
+  app.get('/m/manifest.webmanifest', (_req, res) => res.type('application/manifest+json').sendFile(path.join(PUBLIC_DIR, 'manifest.webmanifest')));
   app.use('/m/assets', express.static(path.join(PUBLIC_DIR, 'assets'), { maxAge: '1h' }));
 
   // Phone upload — authenticated by the per-session upload token (from the QR code).
@@ -122,7 +150,7 @@ export function createApp({ store, ai, notifier, config }) {
   const api = express.Router();
   api.use(requireToken);
 
-  api.get('/meta', (_req, res) => res.json({ categories: CATEGORIES, conditions: CONDITIONS, planPresets: PLAN_PRESETS }));
+  api.get('/meta', (_req, res) => res.json({ categories: CATEGORIES, conditions: CONDITIONS, planPresets: PLAN_PRESETS, publicUrl: config.publicUrl, ai: Boolean(ai) }));
 
   api.post('/sessions', wrap(async (_req, res) => {
     const session = { id: newId('ses'), uploadToken: crypto.randomBytes(18).toString('base64url'), photos: [], createdAt: new Date().toISOString() };
@@ -210,11 +238,35 @@ export function createApp({ store, ai, notifier, config }) {
     res.json(analyzeMarket(enriched, { queries, desiredPrice }));
   }));
 
+  const ReplyInput = z.object({
+    listingId: z.string().optional(),
+    fbId: z.string().optional(),
+    listingTitle: z.string().optional(),
+    buyerMessage: z.string().optional(),
+    history: z.array(z.object({ from: z.enum(['buyer', 'me']), text: z.string().max(2000) })).max(50).optional(),
+    lang: z.enum(['fr', 'en']).optional(),
+  }).refine((v) => v.buyerMessage?.trim() || v.history?.some((m) => m.from === 'buyer'), 'Aucun message d’acheteur');
   api.post('/reply', wrap(async (req, res) => {
-    const { listingId, buyerMessage, lang } = validate(z.object({ listingId: z.string(), buyerMessage: z.string().min(1), lang: z.enum(['fr', 'en']).optional() }), req.body);
-    const listing = store.get('listings', listingId);
-    if (!listing) throw new HttpError(404, 'Annonce introuvable');
-    res.json(await requireAI().draftReply({ listing, buyerMessage, floorPrice: listing.floorPrice, lang }));
+    const input = validate(ReplyInput, req.body);
+    // From Messenger we only know the Facebook id or the title shown in the thread.
+    let listing = input.listingId ? store.get('listings', input.listingId) : null;
+    if (!listing && input.fbId) listing = store.list('listings', (l) => l.fbId === input.fbId)[0] || null;
+    if (!listing && input.listingTitle) {
+      listing = store.list('listings', (l) => l.status !== 'draft')
+        .map((l) => ({ l, score: titleSimilarity(l.title, input.listingTitle) }))
+        .filter((m) => m.score >= 0.55)
+        .sort((a, b) => b.score - a.score)[0]?.l || null;
+    }
+    if (input.listingId && !listing) throw new HttpError(404, 'Annonce introuvable');
+    const context = listing || { title: input.listingTitle || 'Article', price: null };
+    const reply = await requireAI().draftReply({
+      listing: context,
+      buyerMessage: input.buyerMessage,
+      history: input.history || [],
+      floorPrice: listing?.floorPrice,
+      lang: input.lang || listing?.lang,
+    });
+    res.json({ ...reply, listingId: listing?.id || null, listingTitle: context.title });
   }));
 
   // ----------------------------------------------------------- listings
@@ -248,7 +300,11 @@ export function createApp({ store, ai, notifier, config }) {
     }
   }
 
-  const withLadder = (l) => ({ ...l, ladder: priceLadder(l.price, l.floorPrice, l.plan) });
+  const withLadder = (l) => ({
+    ...l,
+    ladder: l.price > 0 ? priceLadder(l.price, l.floorPrice, l.plan) : [],
+    photoUrls: (l.photos || []).map((p) => `/api/sessions/${p.sessionId}/photos/${p.id}`),
+  });
 
   api.get('/listings', (_req, res) => {
     res.json(store.list('listings').sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).map(withLadder));
@@ -320,6 +376,8 @@ export function createApp({ store, ai, notifier, config }) {
         next.priceHistory = [...(l.priceHistory || []), { price: patch.price, at: new Date().toISOString(), reason: 'manual' }];
         next.lastPriceChangeAt = new Date().toISOString();
       }
+      // A floor above the asking price would block every future drop.
+      if (next.floorPrice > next.price) next.floorPrice = next.price;
       if (patch.status === 'active' && !l.postedAt) next.postedAt = new Date().toISOString();
       if (patch.status === 'sold' && !l.soldAt) next.soldAt = new Date().toISOString();
       return next;
@@ -380,6 +438,108 @@ export function createApp({ store, ai, notifier, config }) {
       results.push({ fbId: item.fbId, matched: true, listingId: listing.id });
     }
     res.json({ results });
+  }));
+
+  // ------------------------------------------------- mode éclair (drafts)
+  const DraftInput = z.object({
+    sessionId: z.string(),
+    notes: z.string().max(2000).optional(),
+    mode: z.enum(['fast', 'balanced', 'max']).optional(),
+    pickupArea: z.string().max(200).optional(),
+    negotiable: z.boolean().optional(),
+    delivery: z.boolean().optional(),
+    tone: z.enum(['friendly', 'firm', 'short']).optional(),
+    lang: z.enum(['fr', 'en']).optional(),
+    autoApproveDrops: z.boolean().optional(),
+  });
+  api.post('/drafts', wrap(async (req, res) => {
+    const input = validate(DraftInput, req.body);
+    const session = getSession(input.sessionId);
+    if (!session.photos.length) throw new HttpError(400, 'Ajoute au moins une photo');
+    if (store.list('listings', (l) => l.sessionId === session.id).length) throw new HttpError(409, 'Ces photos sont déjà dans une annonce');
+    const now = new Date().toISOString();
+    const listing = {
+      id: newId('lst'),
+      sessionId: session.id,
+      title: 'Nouvel article',
+      description: '',
+      price: 0,
+      floorPrice: 0,
+      categoryId: 'misc',
+      conditionId: 'used_good',
+      notes: input.notes || '',
+      pickupArea: input.pickupArea || '',
+      negotiable: input.negotiable ?? true,
+      delivery: input.delivery ?? false,
+      tone: input.tone || 'friendly',
+      lang: input.lang || 'fr',
+      photos: session.photos.map((p) => ({ sessionId: session.id, id: p.id })),
+      plan: buildPlan(input.mode || 'balanced', { autoApprove: { price_drop: Boolean(input.autoApproveDrops) } }),
+      status: 'draft',
+      pipeline: { stage: 'analyzing', startedAt: now, updatedAt: now },
+      stats: { views: null, saves: null, messages: 0 },
+      priceHistory: [],
+      renewCount: 0,
+      relistCount: 0,
+      snoozed: {},
+      createdAt: now,
+    };
+    await store.insert('listings', listing);
+    pipeline.enqueue(listing.id);
+    res.status(201).json(withLadder(listing));
+  }));
+
+  const ScannedListing = z.object({ title: z.string(), price: z.any(), url: z.string().optional(), location: z.string().optional(), image: z.string().optional() });
+  api.post('/drafts/:id/market', wrap(async (req, res) => {
+    const { listings } = validate(z.object({ listings: z.array(ScannedListing).max(400) }), req.body);
+    const listing = store.get('listings', req.params.id);
+    if (!listing) throw new HttpError(404, 'Annonce introuvable');
+    if (listing.pipeline?.stage !== 'awaiting_market') throw new HttpError(409, `Étape actuelle : ${listing.pipeline?.stage || 'aucune'}`);
+    const updated = await pipeline.completeMarket(listing.id, listings, { matcher: ai ? (input) => ai.matchComparables(input) : null });
+    res.json(withLadder(updated));
+  }));
+
+  api.post('/drafts/:id/retry', wrap(async (req, res) => {
+    if (!(await pipeline.retry(req.params.id))) throw new HttpError(404, 'Annonce introuvable');
+    res.json(withLadder(store.get('listings', req.params.id)));
+  }));
+
+  api.get('/stats', (_req, res) => res.json(computeStats(store.list('listings'), store.list('actions'))));
+
+  // Marketplace inbox scrape: one conversation per buyer, grouped by listing.
+  const InboxInput = z.object({
+    threads: z.array(z.object({
+      listingTitle: z.string().min(1),
+      buyer: z.string().optional(),
+      unread: z.boolean().optional(),
+      snippet: z.string().max(500).optional(),
+    })).max(500),
+  });
+  api.post('/inbox/sync', wrap(async (req, res) => {
+    const { threads } = validate(InboxInput, req.body);
+    const live = store.list('listings', (l) => ['active', 'pending'].includes(l.status));
+    const byListing = new Map();
+    for (const t of threads) {
+      const match = live
+        .map((l) => ({ l, score: Math.max(titleSimilarity(l.title, t.listingTitle), ...(l.alternateTitles || []).map((a) => titleSimilarity(a, t.listingTitle))) }))
+        .filter((m) => m.score >= 0.55)
+        .sort((a, b) => b.score - a.score)[0];
+      if (!match) continue;
+      const entry = byListing.get(match.l.id) || { buyers: new Set(), unread: 0 };
+      entry.buyers.add(t.buyer || `${t.listingTitle}#${entry.buyers.size}`);
+      if (t.unread) entry.unread += 1;
+      byListing.set(match.l.id, entry);
+    }
+    const updates = [];
+    for (const [id, entry] of byListing) {
+      const updated = await store.update('listings', id, (l) => ({
+        ...l,
+        // Never lower a count the user entered by hand: the inbox list can be partial.
+        stats: { ...l.stats, messages: Math.max(l.stats?.messages || 0, entry.buyers.size), unread: entry.unread, inboxSyncedAt: new Date().toISOString() },
+      }));
+      updates.push({ listingId: id, title: updated.title, conversations: updated.stats.messages, unread: entry.unread });
+    }
+    res.json({ matched: updates.length, updates });
   }));
 
   // ------------------------------------------------------------ actions

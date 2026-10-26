@@ -14,6 +14,7 @@ const ai = hasAnthropicCreds ? new ListingAI({ model: config.model }) : null;
 const notifier = createNotifier({ server: config.ntfyServer, topic: config.ntfyTopic });
 
 const app = createApp({ store, ai, notifier, config });
+app.locals.pipeline.resume();
 app.listen(config.port, () => {
   console.log(`MarketPilot en ligne sur ${config.publicUrl} (port ${config.port})`);
   console.log(`  IA : ${ai ? config.model : 'désactivée — définis ANTHROPIC_API_KEY'}`);

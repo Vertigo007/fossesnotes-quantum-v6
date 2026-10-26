@@ -18,6 +18,21 @@
 
 <!-- ============================================================ CREATE -->
 <section id="tab-create" class="tab">
+  <div class="eclair">
+    <div class="eclair-head">
+      <h2>⚡ Mode éclair</h2>
+      <button id="phone-lot-toggle" class="small secondary">📱 Sur mon cell</button>
+    </div>
+    <div id="phone-lot" class="phone-lot" hidden>
+      <div id="lot-qr" class="qr"></div>
+      <p class="small">Scanne une fois, puis « Ajouter à l’écran d’accueil ». Photographie tes articles un après l’autre : l’IA identifie, rédige et fixe le prix pendant que tu continues.</p>
+    </div>
+    <div id="queue"></div>
+    <button id="publish-all" class="primary" hidden>🚀 Tout publier</button>
+  </div>
+
+  <details id="manual" class="manual">
+  <summary>Mode détaillé, étape par étape</summary>
   <div class="step" id="step-photos">
     <h2><span class="n">1</span> Photos</h2>
     <button id="new-session">Nouvelle annonce</button>
@@ -29,6 +44,7 @@
       </div>
       <ol id="photos" class="photos"></ol>
       <p class="muted small">Glisse les photos pour changer l’ordre — la 1<sup>re</sup> est la couverture.</p>
+      <button id="to-eclair" class="secondary" hidden>⚡ Laisser l’IA tout faire (mode éclair)</button>
     </div>
   </div>
 
@@ -98,10 +114,12 @@
     <button id="save-fill" class="primary">Enregistrer et remplir Marketplace</button>
     <p class="muted small">L’onglet Facebook s’ouvre avec tout rempli. Tu vérifies et tu cliques « Publier ».</p>
   </div>
+  </details>
 </section>
 
 <!-- ============================================================ LISTINGS -->
 <section id="tab-listings" class="tab" hidden>
+  <div id="dashboard" class="dashboard"></div>
   <div class="row">
     <button id="sync" class="secondary">Synchroniser avec Facebook</button>
   </div>

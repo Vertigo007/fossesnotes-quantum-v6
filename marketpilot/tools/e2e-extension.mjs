@@ -75,8 +75,26 @@ const SELLING = page(`
     <div role="button" id="renew" aria-label="Renouveler l’annonce">Renouveler l’annonce</div>
   </div>`, "window.__renewed = 0; document.getElementById('renew').addEventListener('click', () => { window.__renewed++; });");
 
+const INBOX = page(`
+  <div role="main">
+    <div role="row" aria-label="Conversation non lue"><span>Julie · Perceuse DeWalt 20V</span><br><span style="font-weight:700">Encore disponible?</span></div>
+    <div role="row"><span>Marc · Perceuse DeWalt 20V</span><br><span>Ok merci</span></div>
+    <div role="row"><span>Paul · Article inconnu</span><br><span>Salut</span></div>
+  </div>`);
+
+const THREAD = page(`
+  <div role="main" style="width:800px">
+    <a href="/marketplace/item/555/"><h2>Julie · Perceuse DeWalt 20V</h2></a>
+    <div role="row"><div dir="auto" style="width:200px">Bonjour, encore disponible?</div></div>
+    <div role="row"><div dir="auto" style="width:200px;margin-left:560px">Oui!</div></div>
+    <div role="row"><div dir="auto" style="width:200px">Je peux offrir 60 $ cash ce soir</div></div>
+    <div role="textbox" contenteditable="true" style="min-height:30px;border:1px solid #ccc"></div>
+  </div>`);
+
 function fakeFacebook(url) {
   const { pathname } = new URL(url);
+  if (pathname.startsWith('/marketplace/inbox')) return INBOX;
+  if (pathname.startsWith('/marketplace/t/')) return THREAD;
   if (pathname.includes('/search')) return SEARCH;
   if (pathname.startsWith('/marketplace/create')) return form('Publier');
   if (pathname.startsWith('/marketplace/edit')) return form('Mettre à jour');
@@ -85,11 +103,12 @@ function fakeFacebook(url) {
 }
 
 // ------------------------------------------------------------ fake AI
+let lastReply = null;
 const fakeAI = {
   analyzeItem: async () => ({ itemName: 'Perceuse DeWalt 20V', brand: 'DeWalt', model: 'DCD771', categoryId: 'tools', conditionId: 'used_good', conditionNotes: '', keyAttributes: [], searchQueries: ['dewalt 20v'], estimatedRetailPrice: 199, coverPhotoIndex: 0, photoTips: [], policyWarnings: [] }),
-  writeListing: async () => ({ title: 'Perceuse DeWalt 20V', description: 'Fonctionne parfaitement.', alternateTitles: [] }),
+  writeListing: async () => ({ title: 'Visseuse DeWalt DCD771 avec chargeur', description: 'Fonctionne parfaitement. Prix discutable.', alternateTitles: [] }),
   matchComparables: async ({ comparables }) => ({ matches: comparables.map((c, index) => ({ index, match: /dewalt/i.test(c.title) ? 'identical' : 'different' })) }),
-  draftReply: async () => ({ reply: 'Oui!', intent: 'availability', scamSignals: [] }),
+  draftReply: async (input) => { lastReply = input; return { reply: 'Je peux descendre à 100 $, ce soir 19 h?', intent: 'lowball', scamSignals: [] }; },
 };
 
 // --------------------------------------------------------------- run
@@ -212,10 +231,61 @@ current = await apiCall('GET', `/api/listings/${listing.id}`);
 assert.equal(current.price, 105);
 step('baisse de prix approuvée (120 $ → 105 $) appliquée après confirmation');
 
-// 6. Side panel renders the listing and decisions without errors.
+// 6. Mode éclair: phone photos → AI → background market scan → ready → publish from the queue.
+const s2 = await apiCall('POST', '/api/sessions');
+const fd2 = new FormData();
+fd2.append('photos', new Blob([Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==', 'base64')], { type: 'image/jpeg' }), 'p.jpg');
+await fetch(`${serverUrl}/m/api/sessions/${s2.id}/photos`, { method: 'POST', headers: { 'x-upload-token': new URL(s2.mobileUrl).hash.slice(3) }, body: fd2 });
+const eclair = await apiCall('POST', '/api/drafts', { sessionId: s2.id, mode: 'balanced' });
+await app.locals.pipeline.idle();
+assert.equal((await apiCall('GET', `/api/listings/${eclair.id}`)).pipeline.stage, 'awaiting_market');
+const q = await send({ type: 'mp:processQueue' });
+assert.ok(q.ok, q.error);
+assert.equal(q.result.processed, 1);
+let ready = await apiCall('GET', `/api/listings/${eclair.id}`);
+assert.equal(ready.pipeline.stage, 'ready');
+assert.equal(ready.price, 110);
+await panel.reload();
+await panel.waitForSelector(`.qcard[data-id="${eclair.id}"] .qstage.ready`);
+assert.match(await panel.textContent('#publish-all'), /Tout publier \(1\)/);
+if (SHOTS) await panel.setViewportSize({ width: 400, height: 800 }), await panel.waitForTimeout(500), await panel.screenshot({ path: path.join(SHOTS, 'panel-eclair.png'), fullPage: true });
+const eclairTab = context.waitForEvent('page', (p) => p.url().includes('/marketplace/create'));
+await panel.click(`.qcard[data-id="${eclair.id}"] [data-act=publish]`);
+const fb2 = await eclairTab;
+await fb2.waitForFunction(() => window.__state?.description?.includes('Prix discutable'));
+assert.equal(await fb2.evaluate(() => window.__state.price), '110');
+await fb2.click('#submit');
+await fb2.waitForTimeout(800);
+assert.equal((await apiCall('GET', `/api/listings/${eclair.id}`)).status, 'active');
+await fb2.close();
+step('mode éclair : photo → IA → scan du marché automatique → 110 $ → publié depuis la file');
+
+// 7. Inbox: buyers counted per listing (feeds "don't drop the price while buyers talk").
+const sync2 = await send({ type: 'mp:syncNow' });
+assert.ok(sync2.ok, sync2.error);
+current = await apiCall('GET', `/api/listings/${listing.id}`);
+assert.equal(current.stats.messages, 2);
+assert.equal(current.stats.unread, 1);
+step('boîte de réception : 2 acheteurs, 1 non lu sur la perceuse');
+
+// 8. Messenger thread: ✨ button drafts a reply from the whole conversation into the composer.
+const thread = await context.newPage();
+thread.on('pageerror', (e) => pageErrors.push(`thread: ${e.message}`));
+await thread.goto('https://www.facebook.com/marketplace/t/123/');
+await thread.waitForSelector('#mp-reply-btn', { timeout: 15000 });
+await thread.click('#mp-reply-btn');
+await thread.waitForFunction(() => document.querySelector('[role=textbox]').textContent.includes('100 $'));
+assert.deepEqual(lastReply.history.map((m) => m.from), ['buyer', 'me', 'buyer']);
+assert.equal(lastReply.floorPrice, 90, 'listing resolved from the item link → private floor used');
+if (SHOTS) await thread.screenshot({ path: path.join(SHOTS, 'thread-reply.png') });
+await thread.close();
+step('Messenger : réponse IA insérée (contre-offre au-dessus du plancher), jamais envoyée seule');
+
+// 9. Side panel renders the listing, dashboard and decisions without errors.
 await panel.reload();
 await panel.click('[data-tab=listings]');
 await panel.waitForSelector('#listings .card');
+await panel.waitForSelector('#dashboard .tile.hero');
 assert.match(await panel.textContent('#listings'), /Perceuse DeWalt 20V/);
 if (SHOTS) await panel.setViewportSize({ width: 400, height: 800 }), await panel.screenshot({ path: path.join(SHOTS, 'panel-listings.png'), fullPage: true });
 await panel.click('[data-tab=create]');
