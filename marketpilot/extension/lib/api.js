@@ -62,3 +62,22 @@ export async function photoDataUrl(sessionId, photoId) {
   for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
   return `data:${blob.type || 'image/jpeg'};base64,${btoa(bin)}`;
 }
+
+/**
+ * One-click setup: asks the MarketPilot server running on this computer for
+ * its token (the server only answers extension pages on the same machine).
+ * Returns the saved settings, or null when no local server answered.
+ */
+export async function tryPair() {
+  const current = await getSettings();
+  const candidates = [...new Set([current.serverUrl, 'http://localhost:8787', 'http://127.0.0.1:8787'])];
+  for (const serverUrl of candidates) {
+    try {
+      const res = await fetch(`${serverUrl.replace(/\/+$/, '')}/api/pair`, { signal: AbortSignal.timeout(3000) });
+      if (!res.ok) continue;
+      const { token } = await res.json();
+      if (token) return saveSettings({ serverUrl, token });
+    } catch { /* server not running at this address */ }
+  }
+  return null;
+}

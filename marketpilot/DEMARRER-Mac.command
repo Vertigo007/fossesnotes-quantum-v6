@@ -14,6 +14,6 @@ node -e "const [a,b]=process.versions.node.split('.').map(Number);process.exit(a
 }
 
 [ -d node_modules ] || { echo "Installation des dépendances, 1 minute..."; npm install --omit=dev --no-audit --no-fund; }
-[ -f .env ] || node ../tools/setup-env.mjs
+[ -f .env ] || node ../tools/setup-env.mjs || { read -r -p "Appuie sur Entrée pour fermer."; exit 1; }
 
 node --env-file-if-exists=.env src/index.js

@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { lanAddress } from './network.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -8,9 +9,12 @@ process.env.TZ = process.env.TZ || 'America/Toronto';
 
 export const config = {
   port: Number(process.env.PORT) || 8787,
-  // Public URL your phone can reach (LAN IP, ngrok, Render, etc.). Used in QR codes.
-  // Render sets RENDER_EXTERNAL_URL automatically.
-  publicUrl: (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${Number(process.env.PORT) || 8787}`).replace(/\/$/, ''),
+  // Public URL your phone can reach. Online: PUBLIC_URL or Render's RENDER_EXTERNAL_URL.
+  // At home: this computer's Wi-Fi address, detected at every start (it can change).
+  publicUrl: (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL
+    || `http://${lanAddress() || 'localhost'}:${Number(process.env.PORT) || 8787}`).replace(/\/$/, ''),
+  // Lets the Chrome extension on this same computer fetch the token by itself.
+  localPairing: !process.env.RENDER_EXTERNAL_URL && process.env.LOCAL_PAIRING !== 'off',
   // Shared secret between the server, the extension and your phone.
   apiToken: process.env.MARKETPILOT_TOKEN || '',
   dataDir: path.resolve(process.env.DATA_DIR || path.join(here, '..', 'data')),

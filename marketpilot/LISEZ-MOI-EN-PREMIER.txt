@@ -1,127 +1,99 @@
-MARKETPILOT — DÉMARRAGE RAPIDE
-==============================
+MARKETPILOT — INSTALLATION EN 10 MINUTES
+========================================
 
-AVANT DE COMMENCER (une seule fois)
------------------------------------
-1. Installe Node.js, version « LTS » : https://nodejs.org
-2. Obtiens une clé API Anthropic : https://platform.claude.com
-   (Settings > API Keys > Create Key). Ajoute quelques dollars de crédit :
-   une annonce coûte environ 0,05 à 0,15 $.
-3. Utilise Google Chrome, connecté à ton compte Facebook.
-4. Ton cellulaire doit être sur le MÊME Wi-Fi que ton ordinateur.
+Tout est inclus dans ce dossier (Node.js aussi) : rien d'autre à installer.
+Il te faut seulement Google Chrome, connecté à ton compte Facebook, et ton
+cellulaire sur le même Wi-Fi que ton ordinateur.
 
 
-ÉTAPE 1 — DÉMARRER LE SERVEUR
------------------------------
-Windows : double-clique sur  DEMARRER-Windows.bat
-Mac     : clic droit sur DEMARRER-Mac.command > Ouvrir
+1. DÉMARRER (la première fois)
+------------------------------
+- Mets ce dossier MarketPilot dans un endroit fixe, par exemple Documents
+  (pas dans Téléchargements, que Windows nettoie parfois).
+- Double-clique  DEMARRER-Windows.bat
+  Si Windows affiche « Windows a protégé votre ordinateur » :
+  clique « Informations complémentaires », puis « Exécuter quand même ».
+- Une page s'ouvre pour créer ta clé API Anthropic :
+  « Create Key », copie la clé (elle commence par sk-ant-), colle-la dans la
+  fenêtre noire et appuie sur Entrée. La clé est vérifiée tout de suite.
+  Ajoute 5 à 10 $ de crédit dans « Billing » (environ 0,10 $ par annonce).
+- Si le pare-feu de Windows te demande l'accès : coche « Réseaux privés »
+  et clique Autoriser. C'est ce qui permet à ton cell de se connecter.
+- Un raccourci « MarketPilot » est créé sur ton bureau. Les prochaines fois,
+  double-clique simplement ce raccourci.
 
-La première fois :
-  - l'installation prend environ 1 minute ;
-  - on te demande ta clé API Anthropic (colle-la puis Entrée) ;
-  - ntfy : fais Entrée pour passer (voir l'option plus bas) ;
-  - Windows peut demander d'autoriser Node.js dans le pare-feu :
-    coche « Réseaux privés » puis Autoriser. C'est nécessaire pour le cellulaire.
-
-La fenêtre affiche ensuite l'adresse du serveur et le jeton.
-LAISSE CETTE FENÊTRE OUVERTE pendant que tu utilises MarketPilot.
-
-
-ÉTAPE 2 — INSTALLER L'EXTENSION CHROME
---------------------------------------
-1. Dans Chrome, va à :  chrome://extensions
-2. Active le « Mode développeur » (en haut à droite).
-3. Clique sur « Charger l'extension non empaquetée ».
-4. Choisis le dossier  marketpilot\extension
-5. Épingle l'icône MarketPilot (icône casse-tête dans la barre, puis l'épingle).
-6. Clique sur l'icône : le panneau s'ouvre à droite.
-7. Dans l'onglet ⚙︎ (Réglages), entre :
-     - Adresse du serveur : http://localhost:8787
-     - Jeton : celui affiché dans la fenêtre du serveur
-     - Ville Marketplace : ex. laval, montreal, quebec
-       (le mot qui apparaît dans facebook.com/marketplace/laval/)
-     - Secteur de ramassage : ex. Laval (Sainte-Rose)
-   puis clique « Enregistrer ». Tu dois voir « ✅ Connecté · IA active ».
-8. Scanne avec ton cellulaire le code QR « Approuver depuis ton cellulaire »
-   et ajoute la page à ton écran d'accueil.
+LAISSE LA FENÊTRE NOIRE OUVERTE pendant que tu vends.
 
 
-ÉTAPE 3 — MODE ÉCLAIR (la façon rapide)
----------------------------------------
-Sur ton cellulaire :
- 1. Dans l'extension, onglet « Créer », clique « 📱 Sur mon cell » et scanne
-    le code QR. Sur le téléphone, choisis « Ajouter à l'écran d'accueil » :
-    MarketPilot devient une app.
- 2. Pour chaque article : 📷 Photo (3 à 8 photos), une note si tu veux
-    (touche 🎤 sur ton clavier pour dicter), puis « Article suivant ».
-    Enchaîne tous tes articles : l'IA travaille pendant que tu photographies.
- 3. Pour chaque article, l'IA identifie l'article, rédige l'annonce et choisit
-    la catégorie et l'état. Chrome lit ensuite les prix du marché tout seul
-    (aux 2 minutes) et fixe le prix selon ta stratégie (Vendre vite /
-    Équilibré / Max $).
+2. AJOUTER L'EXTENSION À CHROME
+-------------------------------
+La page des extensions de Chrome s'ouvre toute seule, et l'emplacement du
+dossier de l'extension est déjà copié.
+  a) Active « Mode développeur » (en haut à droite).
+  b) Clique « Charger l'extension non empaquetée ».
+  c) Dans la fenêtre, clique dans la barre d'adresse en haut, colle (Ctrl+V),
+     appuie sur Entrée, puis « Sélectionner un dossier ».
+  d) Clique la pièce de casse-tête 🧩 et épingle MarketPilot.
+  e) Clique sur l'icône MarketPilot : le panneau s'ouvre et se connecte tout
+     seul (« ✅ Connecté automatiquement »). Aucun jeton à copier.
+
+
+3. INSTALLER L'APP SUR TON CELLULAIRE
+-------------------------------------
+- Scanne le code QR avec l'appareil photo de ton cell : celui du panneau
+  Chrome, ou celui de la fenêtre noire.
+  Code illisible ? Ouvre http://localhost:8787/m/qr dans Chrome sur le PC.
+- Ajoute la page à l'écran d'accueil :
+    iPhone : bouton Partager ⬆️, puis « Sur l'écran d'accueil ».
+    Android : menu ⋮, puis « Ajouter à l'écran d'accueil ».
+
+
+4. VENDRE
+---------
+Sur le cell, dans l'app MarketPilot, pour chaque article :
+  📷 Photo (3 à 8 photos, la meilleure en premier), une note si tu veux
+  (🎤 pour dicter), la stratégie (Vendre vite / Équilibré / Max $),
+  puis « Article suivant ».
+
+En 1 à 3 minutes, l'IA identifie l'article, rédige l'annonce et Chrome trouve
+le prix du marché. La fiche passe à « ✅ Prête à publier » avec 3 prix au choix.
 
 Pour publier :
- - Sur l'ordi : onglet « Créer », bouton « 🚀 Tout publier ». Chaque annonce
-   s'ouvre remplie ; tu cliques « Publier » sur Facebook et la suivante
-   s'ouvre toute seule.
- - Ou directement du cell : « 📤 Publier depuis le cell » partage les photos
-   vers l'app Facebook et copie le texte ; colle-le dans la description.
-   Touche ensuite « C'est publié ✔ ».
-
-Tu peux changer le prix d'un seul toucher (3 choix) ou cliquer « Modifier »
-dans l'extension avant de publier.
-
-Mode détaillé : si tu veux tout contrôler étape par étape, ouvre
-« Mode détaillé » dans l'onglet « Créer ».
+  - Le plus simple, sur le PC : panneau Chrome, bouton « 🚀 Tout publier ».
+    Chaque annonce s'ouvre toute remplie ; tu cliques « Publier » sur
+    Facebook, et la suivante s'ouvre.
+  - Depuis le cell : « 📤 Publier depuis le cell ». Le texte est copié.
+    Enregistre les images, puis dans Facebook : Marketplace, Vendre,
+    Articles. Choisis les photos, colle le texte dans Description, puis
+    « Publier ». Reviens ensuite toucher « C'est publié ✔ ».
 
 
-ENSUITE : LE SUIVI AUTOMATIQUE
-------------------------------
-- Une fois par jour, clique « Synchroniser avec Facebook » (onglet
-  « Annonces »). Ça met à jour les clics ET compte tes acheteurs dans
-  Messenger. Le système ne baisse jamais le prix d'une annonce qui a des
-  acheteurs intéressés.
-- Dans une conversation Marketplace sur Facebook, clique le bouton
-  « ✨ Réponse IA » (en bas à droite). La réponse est écrite dans la zone de
-  message : tu relis et tu appuies sur Entrée. Une offre trop basse reçoit une
-  contre-offre au-dessus de ton plancher, et les arnaques sont signalées.
-- Onglet « Annonces » : tes ventes, ton argent encaissé, ton délai moyen de
-  vente et le temps économisé.
-- Onglet « Décisions » : les baisses de prix proposées. Tu approuves, tu
-  refuses ou tu changes le montant, aussi depuis ton cell. Jamais sous ton
-  plancher.
-- Les relances (« Renouveler ») se font toutes seules aux 7 jours quand
-  Chrome et le serveur sont ouverts.
+ENSUITE, CHAQUE JOUR
+--------------------
+- Panneau Chrome, onglet « Annonces » : « Synchroniser avec Facebook ».
+  Ça relie tes annonces, compte les clics et les acheteurs.
+- Un acheteur t'écrit ? Ouvre la conversation dans Chrome et clique
+  « ✨ Réponse IA » : la réponse s'écrit dans la zone de message. Tu relis et
+  tu appuies sur Entrée. Rien n'est jamais envoyé sans toi.
+- Onglet « Décisions » (aussi sur le cell) : les baisses de prix proposées.
+  Rien ne baisse sans ton accord, jamais sous ton prix plancher.
 - Vendu ? Clique « Vendu » dans MarketPilot, et marque-le vendu sur Facebook.
 
 
-PLUS DE FENÊTRE À GARDER OUVERTE
---------------------------------
-Pour que ton cell fonctionne partout et que le serveur tourne 24 h sur 24,
-héberge-le en ligne (environ 7 $ US par mois). Suis le guide
-DEPLOIEMENT-EN-LIGNE.md.
+SI ÇA BLOQUE
+------------
+- Le panneau dit « MarketPilot ne répond pas » : la fenêtre noire est fermée.
+  Double-clique le raccourci MarketPilot sur le bureau.
+- Le cell n'ouvre pas la page :
+    - vérifie que le cell est sur le même Wi-Fi que le PC (pas en données
+      cellulaires) ;
+    - autorise Node.js dans le pare-feu Windows (Paramètres, Confidentialité
+      et sécurité, Sécurité Windows, Pare-feu, Autoriser une application).
+- Une fiche reste sur « Prix du marché » : Chrome est fermé ou n'est pas
+  connecté à Facebook. Sinon, clique « Scanner maintenant » sur la fiche.
+- « IA inactive » ou erreurs d'IA : vérifie ton crédit sur platform.claude.com.
+  Pour changer de clé : supprime le fichier server\.env et relance.
+- Un champ Facebook ne se remplit pas : complète-le à la main et envoie une
+  capture d'écran pour qu'on ajuste.
 
-
-OPTIONNEL — NOTIFICATIONS SUR TON CELL
---------------------------------------
-1. Installe l'app « ntfy » (iPhone ou Android).
-2. Abonne-toi à un sujet secret, ex. marketpilot-tonnom-8h3k2p.
-3. Ouvre marketpilot\server\.env avec le Bloc-notes et mets
-   NTFY_TOPIC=marketpilot-tonnom-8h3k2p
-4. Ferme la fenêtre du serveur et relance DEMARRER.
-   Tu recevras une notification pour chaque décision à prendre.
-
-
-PROBLÈMES FRÉQUENTS
--------------------
-- « Serveur injoignable » : la fenêtre du serveur est fermée. Relance DEMARRER.
-- Le cell n'ouvre pas la page photos ou l'app :
-    - vérifie que le cell est sur le même Wi-Fi ;
-    - autorise Node.js dans le pare-feu Windows (réseaux privés) ;
-    - si l'adresse dans server\.env (PUBLIC_URL) n'est pas la bonne IP,
-      corrige-la (ipconfig > Adresse IPv4).
-- Un champ n'est pas rempli sur Facebook : Facebook change souvent sa page.
-  Remplis-le à la main et note lequel, pour qu'on ajuste l'extension.
-- « IA inactive » : la clé API est manquante ou invalide dans server\.env.
-
-Pour tout recommencer à zéro : supprime server\.env et server\data.
+Pour vendre de partout sans laisser le PC allumé : voir DEPLOIEMENT-EN-LIGNE.md.

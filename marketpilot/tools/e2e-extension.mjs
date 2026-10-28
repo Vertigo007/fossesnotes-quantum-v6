@@ -114,7 +114,7 @@ const fakeAI = {
 // --------------------------------------------------------------- run
 const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mp-e2e-'));
 const store = await new Store(path.join(dataDir, 'db.json')).load();
-const app = createApp({ store, ai: fakeAI, notifier: null, config: { apiToken: TOKEN, dataDir, publicUrl: 'http://127.0.0.1', maxPhotosPerSession: 10 } });
+const app = createApp({ store, ai: fakeAI, notifier: null, config: { apiToken: TOKEN, dataDir, publicUrl: 'http://127.0.0.1', maxPhotosPerSession: 10, localPairing: true } });
 const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
 const serverUrl = `http://127.0.0.1:${server.address().port}`;
 
@@ -147,8 +147,13 @@ const panel = await context.newPage();
 panel.on('pageerror', (e) => pageErrors.push(`panel: ${e.message}`));
 await panel.goto(`chrome-extension://${extId}/sidepanel/index.html`);
 // Extension APIs aren't reliably bound in the worker's evaluate context; use the panel page.
-await panel.evaluate(async (s) => chrome.storage.local.set({ settings: s }), { serverUrl, token: TOKEN, autoExecute: false, autoSubmit: false, citySlug: 'laval' });
+// No token given: the panel must pair with the local server by itself.
+await panel.evaluate(async (s) => chrome.storage.local.set({ settings: s }), { serverUrl, autoExecute: false, autoSubmit: false, citySlug: 'laval' });
 await panel.reload();
+await panel.waitForFunction(async () => (await chrome.storage.local.get('settings')).settings?.token, null, { timeout: 10000 });
+assert.equal(await panel.evaluate(async () => (await chrome.storage.local.get('settings')).settings.token), TOKEN);
+assert.match(await panel.textContent('#flash'), /Connecté automatiquement/);
+console.log('✔ jumelage automatique : l’extension a trouvé le serveur et son jeton toute seule');
 const send = (msg) => panel.evaluate((m) => chrome.runtime.sendMessage(m), msg);
 const apiCall = async (method, url, body) => {
   const res = await fetch(`${serverUrl}${url}`, { method, headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });

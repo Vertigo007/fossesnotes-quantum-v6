@@ -1,4 +1,4 @@
-import { api, getSettings, saveSettings } from '../lib/api.js';
+import { api, getSettings, saveSettings, tryPair } from '../lib/api.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -757,21 +757,41 @@ $('s-save').addEventListener('click', (e) => busy(e.currentTarget, async () => {
 // ----------------------------------------------------------------- boot
 
 (async () => {
-  const s = await getSettings();
+  let s = await getSettings();
+  let justPaired = false;
+  if (!s.token) {
+    const paired = await tryPair();
+    if (paired) { s = paired; justPaired = true; }
+  }
   draft = (await chrome.storage.local.get('draft')).draft || {};
   $('pickup').value = draft.pickupArea || s.pickupArea || '';
   $('tone').value = s.tone;
   $('lang').value = s.lang;
-  if (!s.token) { showTab('settings'); flash('Bienvenue ! Configure ton serveur MarketPilot pour commencer.', 'info', 0); return; }
+  if (!s.token) {
+    showTab('settings');
+    flash('Démarre MarketPilot sur ton ordinateur (raccourci « MarketPilot » sur le bureau), puis rouvre ce panneau : il se connectera tout seul.', 'info', 0);
+    return;
+  }
   try {
     meta = await api('/api/meta');
   } catch (err) {
-    flash(err.message, 'error', 0);
-    showTab('settings');
-    return;
+    // The server was reinstalled (new token): pair again silently.
+    const repaired = err.status === 401 && await tryPair();
+    if (repaired) {
+      meta = await api('/api/meta').catch(() => null);
+    }
+    if (!meta) {
+      flash(err.status === 0 ? 'MarketPilot ne répond pas : démarre-le sur ton ordinateur (raccourci « MarketPilot » sur le bureau).' : err.message, 'error', 0);
+      showTab('settings');
+      return;
+    }
   }
   renderCreate();
   loadQueue();
+  if (justPaired) {
+    flash('✅ Connecté automatiquement à MarketPilot. Scanne le code avec ton cellulaire pour commencer.', 'info', 12000);
+    $('phone-lot-toggle').click();
+  }
   const pending = await api('/api/actions?status=pending').catch(() => []);
   $('decision-count').hidden = !pending.length;
   $('decision-count').textContent = pending.length;

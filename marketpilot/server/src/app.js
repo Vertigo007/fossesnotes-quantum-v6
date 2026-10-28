@@ -17,6 +17,7 @@ import { AIRefusalError } from './ai.js';
 import { IMAGE_TYPES, photoStore } from './photos.js';
 import { createPipeline } from './pipeline.js';
 import { computeStats } from './stats.js';
+import { isLoopback } from './network.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(here, '..', 'public');
@@ -112,6 +113,31 @@ export function createApp({ store, ai, notifier, config }) {
   });
 
   // ---------------------------------------------------------------- public
+  // One-click setup: the extension running on this same computer gets the
+  // token without copy-paste. Only for direct loopback connections (not via
+  // a proxy, so X-Forwarded-For can't fake it) from an extension page, so a
+  // website open in the browser can't read it.
+  app.get('/api/pair', (req, res) => {
+    const direct = isLoopback(req.socket.remoteAddress) && !req.headers['x-forwarded-for'];
+    const fromExtension = /^chrome-extension:\/\//.test(req.headers.origin || '');
+    if (!config.localPairing || !direct || !fromExtension) return res.status(403).json({ error: 'Jumelage automatique impossible : entre le jeton à la main.' });
+    res.json({ token: config.apiToken, publicUrl: config.publicUrl });
+  });
+
+  // Big phone QR code, viewable only on this computer (http://localhost:PORT/m/qr).
+  app.get('/m/qr', wrap(async (req, res) => {
+    const direct = isLoopback(req.socket.remoteAddress) && !req.headers['x-forwarded-for'];
+    if (!config.localPairing || !direct) return res.status(403).type('text/plain').send('Page disponible seulement sur l’ordinateur du serveur.');
+    const url = `${config.publicUrl}/m/lot#k=${config.apiToken}`;
+    const svg = await QRCode.toString(url, { type: 'svg', margin: 2, width: 360 });
+    res.type('html').send(`<!doctype html><meta charset="utf-8"><title>MarketPilot · Cellulaire</title>
+<body style="font:18px system-ui;text-align:center;padding:32px;background:#fff;color:#1c1e21">
+<h1 style="font-size:24px">📱 Scanne avec l’appareil photo de ton cellulaire</h1>
+<div style="display:inline-block">${svg}</div>
+<p>Puis « Ajouter à l’écran d’accueil ». Ton cell doit être sur le même Wi-Fi que cet ordinateur.</p>
+<p style="color:#9a6700">Ce code contient ta clé privée : ne le montre à personne.</p></body>`);
+  }));
+
   app.get('/api/health', (_req, res) => res.json({ ok: true, ai: Boolean(ai), notifications: Boolean(notifier?.enabled) }));
   app.get('/m/s/:id', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'mobile.html')));
   app.get('/m/approvals', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'approvals.html')));

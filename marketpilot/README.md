@@ -59,6 +59,14 @@ Le serveur analyse toutes les 30 minutes chaque annonce en ligne :
 
 ## Installation (≈ 10 minutes)
 
+> **Windows, le plus simple :** télécharge le paquet `MarketPilot-Windows-v0.3.0.zip`, qui inclut Node.js et toutes les dépendances. Fais ensuite un double-clic sur `DEMARRER-Windows.bat` et suis [LISEZ-MOI-EN-PREMIER.txt](LISEZ-MOI-EN-PREMIER.txt).
+> - La clé API est vérifiée pendant l'installation.
+> - Un raccourci est créé sur le bureau.
+> - L'extension se connecte toute seule au serveur : aucun jeton à copier.
+> - Un code QR pour le cellulaire s'affiche dans la fenêtre.
+>
+> Le paquet se fabrique avec `tools/build-windows.sh`. Les étapes ci-dessous décrivent l'installation manuelle (Mac, Linux, développement).
+
 ### 1. Serveur
 
 Node 22.9 ou plus récent.

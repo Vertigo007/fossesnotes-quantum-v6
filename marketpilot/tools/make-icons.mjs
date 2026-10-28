@@ -75,3 +75,14 @@ for (const size of [16, 48, 128]) fs.writeFileSync(new URL(`icon${size}.png`, ou
 const web = new URL('../server/public/assets/', import.meta.url);
 for (const size of [192, 512]) fs.writeFileSync(new URL(`icon-${size}.png`, web), png(size));
 console.log('icons written');
+
+// Windows desktop-shortcut icon: an ICO wrapping a 256px PNG (supported since Vista).
+{
+  const pngData = png(256);
+  const header = Buffer.alloc(6); header.writeUInt16LE(0, 0); header.writeUInt16LE(1, 2); header.writeUInt16LE(1, 4);
+  const entry = Buffer.alloc(16);
+  entry[0] = 0; entry[1] = 0; // 0 = 256px
+  entry.writeUInt16LE(1, 4); entry.writeUInt16LE(32, 6);
+  entry.writeUInt32LE(pngData.length, 8); entry.writeUInt32LE(22, 12);
+  fs.writeFileSync(new URL('marketpilot.ico', import.meta.url), Buffer.concat([header, entry, pngData]));
+}

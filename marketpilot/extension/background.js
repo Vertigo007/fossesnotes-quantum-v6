@@ -1,13 +1,19 @@
 // Background service worker: market scans, form filling and execution of
 // approved strategy actions (renew, price drop, relist, boost).
 
-import { api, getSettings, photoDataUrl } from './lib/api.js';
+import { api, getSettings, photoDataUrl, tryPair } from './lib/api.js';
 
 const FB = 'https://www.facebook.com';
 const ACTION_ALARM = 'mp-actions';
 const QUEUE_ALARM = 'mp-queue';
 
+async function pairIfNeeded() {
+  const { token } = await getSettings();
+  if (!token) await tryPair();
+}
+
 function scheduleAlarms() {
+  pairIfNeeded();
   chrome.alarms.create(ACTION_ALARM, { periodInMinutes: 15, delayInMinutes: 1 });
   // Drafts photographed on the phone wait for a market scan: check often.
   chrome.alarms.create(QUEUE_ALARM, { periodInMinutes: 2, delayInMinutes: 0.5 });
@@ -19,6 +25,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onStartup.addListener(scheduleAlarms);
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  await pairIfNeeded();
   if (alarm.name === QUEUE_ALARM) {
     await processMarketQueue().catch((err) => console.warn('[MarketPilot] file éclair', err));
     return;
